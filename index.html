@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Таймлайн смены кухни</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Расписание смены кухни: кто, что и когда делает">
+<meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Кухня">
+<link rel="stylesheet" href="fonts/onest.css">
+<style>
+/* Раскладка: шапка с вкладками → панель фильтров → лента (шкала времени × дорожки ролей) → панель описания задачи.
+   Лента скроллится внутри своего контейнера; страница в ширину не растёт. Данные лежат в data.json рядом со страницей; приложение само читает его раз в 5 минут. */
+:root {
+  --font: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg: #f3f4f8;
+  --surface: #ffffff;
+  --surface-2: #eaecf3;
+  --line: #d6d9e4;
+  --line-strong: #b9bed0;
+  --fg: #14171f;
+  --muted: #596074;
+  --accent: #e0383e;
+  --accent-fg: #ffffff;
+  --ok: #1e7a46;
+  --warn: #9a5b00;
+  --warn-bg: #fff3d6;
+  --role-su: oklch(0.66 0.19 25);   --role-su-fg: #ffffff;
+  --role-p: oklch(0.80 0.19 135);   --role-p-fg: #14230a;
+  --role-ham: oklch(0.58 0.15 262); --role-ham-fg: #ffffff;
+  --role-gc: oklch(0.85 0.16 92);   --role-gc-fg: #2a2308;
+  --role-xc: oklch(0.87 0.09 55);   --role-xc-fg: #33200f;
+  --role-tq: oklch(0.74 0.12 190);  --role-tq-fg: #05201f;
+  --role-vi: oklch(0.62 0.17 295);  --role-vi-fg: #ffffff;
+  --role-pk: oklch(0.78 0.13 350);  --role-pk-fg: #3a0c1f;
+  --role-gy: oklch(0.74 0.02 260);  --role-gy-fg: #14171f;
+  --role-or: oklch(0.76 0.16 55);   --role-or-fg: #301604;
+  --off: rgba(20, 23, 31, .05);
+  --hatch: rgba(20, 23, 31, .08);
+  --tbg-l: .94; --tbd-l: .62; --ttx-l: .30;
+  --shadow: 0 8px 30px rgba(20, 23, 31, .18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1017; --surface: #151a24; --surface-2: #1d2432; --line: #2a3246; --line-strong: #3b4560;
+    --fg: #e8ebf3; --muted: #8e97ac; --accent: #ff6468; --accent-fg: #1a0708; --ok: #4cc38a; --warn: #f0b254; --warn-bg: #3a2c10;
+    --role-su: oklch(0.62 0.18 25); --role-su-fg: #fff6f6; --role-p: oklch(0.78 0.18 135); --role-p-fg: #0d1a06; --role-ham: oklch(0.58 0.14 262); --role-ham-fg: #f3f5ff; --role-gc: oklch(0.80 0.15 92); --role-gc-fg: #1f1a05; --role-xc: oklch(0.80 0.09 55); --role-xc-fg: #25160a;
+    --role-tq: oklch(0.70 0.12 190); --role-tq-fg: #04201e; --role-vi: oklch(0.60 0.16 295); --role-vi-fg: #f6f3ff; --role-pk: oklch(0.74 0.13 350); --role-pk-fg: #2a0714; --role-gy: oklch(0.55 0.02 260); --role-gy-fg: #f1f3f8; --role-or: oklch(0.72 0.15 55); --role-or-fg: #251003;
+    --off: rgba(0, 0, 0, .28); --hatch: rgba(255, 255, 255, .05);
+    --tbg-l: .30; --tbd-l: .64; --ttx-l: .95; --shadow: 0 8px 30px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1017; --surface: #151a24; --surface-2: #1d2432; --line: #2a3246; --line-strong: #3b4560;
+  --fg: #e8ebf3; --muted: #8e97ac; --accent: #ff6468; --accent-fg: #1a0708; --ok: #4cc38a; --warn: #f0b254; --warn-bg: #3a2c10;
+  --role-su: oklch(0.62 0.18 25); --role-su-fg: #fff6f6; --role-p: oklch(0.78 0.18 135); --role-p-fg: #0d1a06; --role-ham: oklch(0.58 0.14 262); --role-ham-fg: #f3f5ff; --role-gc: oklch(0.80 0.15 92); --role-gc-fg: #1f1a05; --role-xc: oklch(0.80 0.09 55); --role-xc-fg: #25160a;
+  --role-tq: oklch(0.70 0.12 190); --role-tq-fg: #04201e; --role-vi: oklch(0.60 0.16 295); --role-vi-fg: #f6f3ff; --role-pk: oklch(0.74 0.13 350); --role-pk-fg: #2a0714; --role-gy: oklch(0.55 0.02 260); --role-gy-fg: #f1f3f8; --role-or: oklch(0.72 0.15 55); --role-or-fg: #251003;
+  --off: rgba(0, 0, 0, .28); --hatch: rgba(255, 255, 255, .05);
+  --tbg-l: .30; --tbd-l: .64; --ttx-l: .95; --shadow: 0 8px 30px rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.4;
+  padding-block: 20px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app { max-width: 1700px; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* цвета лент: класс rc-* задаёт пару --rb / --rf */
+.rc-su { --rb: var(--role-su); --rf: var(--role-su-fg); }
+.rc-p  { --rb: var(--role-p);  --rf: var(--role-p-fg); }
+.rc-ham { --rb: var(--role-ham); --rf: var(--role-ham-fg); }
+.rc-gc { --rb: var(--role-gc); --rf: var(--role-gc-fg); }
+.rc-xc { --rb: var(--role-xc); --rf: var(--role-xc-fg); }
+.rc-tq { --rb: var(--role-tq); --rf: var(--role-tq-fg); }
+.rc-vi { --rb: var(--role-vi); --rf: var(--role-vi-fg); }
+.rc-pk { --rb: var(--role-pk); --rf: var(--role-pk-fg); }
+.rc-gy { --rb: var(--role-gy); --rf: var(--role-gy-fg); }
+.rc-or { --rb: var(--role-or); --rf: var(--role-or-fg); }
+
+/* типы работ: оттенок и насыщенность; светлоту задаёт тема */
+.ty-arrival { --h: 100; --c: .11; }
+.ty-setup   { --h: 185; --c: .10; }
+.ty-prep    { --h: 250; --c: .14; }
+.ty-line    { --h: 48;  --c: .15; }
+.ty-control { --h: 300; --c: .14; }
+.ty-handoff { --h: 78;  --c: .14; }
+.ty-docs    { --h: 18;  --c: .12; }
+.ty-meeting { --h: 335; --c: .13; }
+.ty-clean   { --h: 232; --c: .035; }
+
+/* шапка */
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
+.live { margin: 6px 0 0; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 12px; max-width: 100%; overflow-x: auto; }
+.tabs button { border: 0; background: transparent; padding: 8px 16px; border-radius: 9px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+
+/* панель управления */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 13px; font-weight: 500; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.zoom { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.zoom button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 10px; font-weight: 600; }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+.filters { display: flex; flex-direction: column; gap: 8px; }
+.frow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.flabel { min-width: 74px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 500; }
+.chip[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.dot { width: 10px; height: 10px; border-radius: 3px; background: oklch(var(--tbd-l) var(--c, .1) var(--h, 250)); flex: none; }
+.dot.cross { background: transparent; border: 1.5px dashed var(--fg); }
+
+/* лента */
+.tl { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; }
+.tl-scroll { overflow: auto; max-height: 78vh; cursor: grab; user-select: none; -webkit-user-select: none; position: relative; overscroll-behavior: contain; }
+.tl-scroll.drag { cursor: grabbing; }
+.tl-inner { position: relative; min-width: 100%; }
+.tl-row { display: flex; }
+.tl-head { position: sticky; top: 0; z-index: 6; background: var(--surface); border-bottom: 1px solid var(--line); }
+.tl-corner { position: sticky; left: 0; z-index: 7; flex: none; width: var(--lw); background: var(--surface); display: flex; align-items: end; padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-right: 1px solid var(--line); }
+.tl-axtrack { position: relative; height: 32px; flex: none; cursor: pointer; }
+.tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); }
+.tick span { position: absolute; left: 6px; bottom: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tick.major { border-left-color: var(--line-strong); }
+.tick.major span { color: var(--fg); font-weight: 600; }
+.tl-mstrack { position: relative; height: 24px; flex: none; }
+.flag { position: absolute; top: 0; bottom: 0; border-left: 1.5px dashed var(--accent); }
+.flag span { position: absolute; left: 5px; top: 4px; font-size: 11px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.tl-lanes { position: relative; }
+.tl-lane { display: flex; border-bottom: 1px solid var(--line); }
+.tl-lane:last-child { border-bottom: 0; }
+.tl-label { position: sticky; left: 0; z-index: 5; flex: none; width: var(--lw); padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; gap: 2px; border-right: 1px solid var(--line); background: var(--rb); color: var(--rf); }
+.rl-role { font-weight: 700; font-size: 14px; line-height: 1.2; overflow-wrap: anywhere; }
+.rl-sub { font-size: 11.5px; opacity: .9; font-variant-numeric: tabular-nums; }
+.tl-track {
+  position: relative; flex: none; height: 78px;
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to right, var(--line-strong) 1px, transparent 1px);
+  background-size: calc(var(--ppm) * 10px) 100%, calc(var(--ppm) * 60px) 100%;
+  background-position: 0 0, calc(var(--ppm) * 30px) 0;
+}
+.off { position: absolute; top: 0; bottom: 0; background-color: var(--off); background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--hatch) 6px 7px); }
+.blk {
+  position: absolute; top: 7px; bottom: 7px; padding: 5px 8px; text-align: left; overflow: hidden; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  border-radius: 8px; border: 1px solid oklch(var(--tbd-l) var(--c) var(--h));
+  background: oklch(var(--tbg-l) calc(var(--c) * .4) var(--h)); color: oklch(var(--ttx-l) calc(var(--c) * .45) var(--h));
+  transition: opacity .15s, box-shadow .15s;
+}
+.blk:hover { box-shadow: 0 0 0 2px oklch(var(--tbd-l) var(--c) var(--h)); z-index: 2; }
+.blk .bt { font-size: 12px; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.blk .bm { font-size: 11px; opacity: .8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.blk .bh { font-size: 10.5px; font-weight: 600; opacity: .9; line-height: 1.15; }
+.blk.tiny { padding: 0; }
+.blk.cross { border-style: dashed; border-width: 1.5px; }
+.blk.dim { opacity: .24; }
+.blk.hi { border-width: 2px; box-shadow: 0 0 0 1px var(--surface), 0 0 0 3px oklch(var(--tbd-l) var(--c) var(--h)); }
+.tl-over { position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 3; }
+.mline { position: absolute; top: 0; bottom: 0; border-left: 1.5px dashed var(--accent); opacity: .55; }
+.nowline { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent); }
+.nowline span { position: absolute; top: 2px; left: 4px; background: var(--accent); color: var(--accent-fg); font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; }
+.pline { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--fg); }
+.pline span { position: absolute; bottom: 2px; left: 4px; background: var(--fg); color: var(--bg); font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+
+.probe { padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13px; }
+.probe b { font-variant-numeric: tabular-nums; }
+.probe .pr { display: inline-flex; gap: 8px; align-items: center; min-width: 0; }
+.hint { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 110ch; }
+.legend-note { margin: 0; color: var(--muted); font-size: 12.5px; }
+.boot { color: var(--muted); }
+
+/* вкладки: сейчас / по ролям / правила */
+.panel { display: flex; flex-direction: column; gap: 14px; }
+.now-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.now-time { font-size: 38px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; text-align: left; }
+.card-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rolepill { display: inline-block; padding: 3px 10px; border-radius: 8px; font-weight: 700; font-size: 12.5px; background: var(--rb); color: var(--rf); }
+.shifttag { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cur { border: 1px solid oklch(var(--tbd-l) var(--c) var(--h)); background: oklch(var(--tbg-l) calc(var(--c) * .4) var(--h)); color: oklch(var(--ttx-l) calc(var(--c) * .45) var(--h)); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; }
+.cur .ct { font-weight: 700; }
+.cur .cm { font-size: 12.5px; opacity: .85; font-variant-numeric: tabular-nums; }
+.prog { height: 5px; border-radius: 3px; background: rgba(127, 127, 127, .25); overflow: hidden; }
+.prog i { display: block; height: 100%; background: oklch(var(--tbd-l) var(--c) var(--h)); }
+.next { color: var(--muted); font-size: 13px; }
+.next-btn { border: 0; background: none; padding: 0; text-align: left; color: var(--muted); font-size: 13px; }
+.next-btn:hover { color: var(--fg); }
+.muted { color: var(--muted); }
+.lane-sec { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.lane-sec > .card-h { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.trow { display: grid; grid-template-columns: 108px 1fr; gap: 10px; align-items: center; width: 100%; padding: 9px 14px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; }
+.lane-sec .trow:first-of-type { border-top: 0; }
+.trow:hover { background: var(--surface-2); }
+.trow .tt { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
+.trow .tn { display: flex; align-items: center; gap: 8px; font-weight: 500; min-width: 0; }
+.trow .tn span.tx { min-width: 0; }
+.rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 12px; align-items: start; }
+.rules h3 { margin: 0; font-size: 15px; }
+.rules h4 { margin: 4px 0 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rules ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.rules p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* описание задачи */
+.scrim { position: fixed; inset: 0; background: rgba(8, 10, 16, .45); z-index: 40; }
+.drawer {
+  position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-right: env(safe-area-inset-right, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.dr-h { display: flex; align-items: start; gap: 12px; padding: 16px 18px 12px; }
+.dr-h h2 { margin: 0; font-size: 18px; line-height: 1.25; flex: 1; text-wrap: balance; overflow-wrap: anywhere; }
+.dr-x { border: 1px solid var(--line); background: var(--surface); width: 34px; height: 34px; border-radius: 9px; font-size: 18px; line-height: 1; }
+.dr-b { padding: 0 18px 18px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.dr-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; }
+.dr-meta dt { color: var(--muted); }
+.dr-meta dd { margin: 0; font-variant-numeric: tabular-nums; }
+.dr-desc { white-space: pre-wrap; font-size: 13.5px; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 12px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid oklch(var(--tbd-l) var(--c) var(--h)); background: oklch(var(--tbg-l) calc(var(--c) * .4) var(--h)); color: oklch(var(--ttx-l) calc(var(--c) * .45) var(--h)); align-self: flex-start; }
+.note { font-size: 12.5px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); color: var(--muted); }
+
+
+/* редактор */
+.edbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 10px; }
+.edbar .btn { padding: 6px 12px; }
+.edpill { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--fg); color: var(--bg); }
+.sv { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sv[data-s="ok"] { color: var(--ok); }
+.sv[data-s="dirty"], .sv[data-s="busy"] { color: var(--warn); }
+.sv[data-s="err"] { color: var(--accent); font-weight: 600; }
+body.pv .edonly { display: none !important; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld .fl { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+input[type="text"], input[type="password"], input[type="time"], select, textarea {
+  font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 9px; min-width: 0; width: 100%;
+}
+textarea { resize: vertical; line-height: 1.45; }
+input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); flex: none; }
+.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.nudge .nl { color: var(--muted); font-size: 12px; min-width: 66px; }
+.nudge button { padding: 4px 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btn.danger { color: var(--accent); border-color: var(--accent); }
+.btn.danger.armed { background: var(--accent); color: var(--accent-fg); }
+.note.warn { background: var(--warn-bg); color: var(--warn); }
+.note.bad { background: var(--warn-bg); color: var(--accent); font-weight: 600; }
+.setup { display: flex; flex-direction: column; gap: 14px; max-width: 980px; }
+.setup h3 { margin: 0; font-size: 15px; }
+.lane-ed { display: flex; flex-direction: column; gap: 10px; }
+.lane-ed-g { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sw { width: 28px; height: 28px; border-radius: 8px; border: 2px solid transparent; background: var(--rb); padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px var(--surface) inset; }
+.ms-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; }
+.tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+.grp { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.xs { padding: 4px 10px; font-size: 12.5px; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 18px; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.foot p { margin: 0; }
+.lnk { border: 0; background: none; padding: 4px 0; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.lnk:hover { color: var(--fg); }
+.mode { font-size: 12.5px; color: var(--muted); }
+.login { display: flex; flex-direction: column; gap: 12px; }
+.login p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+
+@media (max-width: 640px) {
+  h1 { font-size: 22px; }
+  .drawer { top: auto; left: 0; width: 100%; max-height: 90%; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; }
+  .flabel { width: 100%; }
+  .now-time { font-size: 30px; }
+  .trow { grid-template-columns: 92px 1fr; }
+  
+  .lane-ed-g { grid-template-columns: 1fr 1fr; }
+  .lane-ed-g .fld:first-child { grid-column: 1 / -1; }
+  .ms-row { grid-template-columns: 96px 1fr auto; }
+  
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1 id="h1">Таймлайн смены кухни</h1>
+      <p class="sub" id="sub"></p>
+      <p class="live" id="live"></p>
+      
+      <div class="edbar" id="edbar" hidden>
+        <span class="edpill">Редактор</span>
+        <span class="sv edonly" id="sv" data-s="idle">Изменений нет</span>
+        <button class="btn accent edonly" id="pubbtn" type="button" disabled>Опубликовать</button>
+        <button class="btn edonly" id="addtask" type="button">＋ Задача</button>
+        <button class="btn" id="previewbtn" type="button" aria-pressed="false">Как видят сотрудники</button>
+        <button class="btn" id="outbtn" type="button">Выйти</button>
+        <span class="mode" id="modelab"></span>
+      </div>
+      
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="now" aria-selected="false">Сейчас</button>
+      <button role="tab" data-tab="roles" aria-selected="false">По ролям</button>
+      <button role="tab" data-tab="lenta" aria-selected="true">Лента</button>
+      <button role="tab" data-tab="rules" aria-selected="false">Правила</button>
+      <button role="tab" data-tab="setup" aria-selected="false" class="edonly" hidden>Настройка</button>
+    </div>
+  </header>
+
+  <section class="panel" id="p-lenta" hidden>
+    <div class="bar">
+      <div class="seg" id="phase" role="group" aria-label="Часть дня">
+        <button data-p="all" aria-pressed="true">Весь день</button>
+        <button data-p="open" aria-pressed="false">Открытие</button>
+        <button data-p="service" aria-pressed="false">Ведение</button>
+        <button data-p="close" aria-pressed="false">Закрытие</button>
+      </div>
+      <div class="zoom"><button id="zm" aria-label="Уменьшить масштаб">−</button><span id="zl">4 px/мин</span><button id="zp" aria-label="Увеличить масштаб">+</button></div>
+      <button class="btn accent" id="tonow">К текущему времени</button>
+      <button class="btn" id="helpers" aria-pressed="false">⇄ Кто кому помогает</button>
+    </div>
+    <div class="filters">
+      <div class="frow"><span class="flabel">Роль</span><span id="f-roles" class="frow"></span></div>
+      <div class="frow"><span class="flabel">Смена</span><span id="f-shifts" class="frow"></span></div>
+      <div class="frow"><span class="flabel">Вид работы</span><span id="f-types" class="frow"></span></div>
+    </div>
+    <div class="tl" id="tl">
+      <div class="tl-scroll" id="tlscroll"><div class="tl-inner" id="tlinner"></div></div>
+    </div>
+    <div class="probe" id="probe"></div>
+    <p class="hint">Шаг сетки — 10 минут. Тяните ленту мышью. Нажмите на задачу — откроется описание. Нажмите на шкалу времени — увидите, кто чем занят в эту минуту. Штриховка — время вне смены.</p>
+    <p class="hint edonly" hidden>Редактор: нажмите на задачу, чтобы изменить время, название и описание. Двойной щелчок по пустому месту дорожки — новая задача в это время. Ленты, вехи и заголовок — во вкладке «Настройка». Правки видны только вам, пока не нажмёте «Опубликовать»; у сотрудников расписание обновится в течение 5–7 минут.</p>
+    <p class="legend-note" id="helpnote" hidden>Пунктирные задачи — перекрёстная работа: один сотрудник помогает другому или берёт на себя его задачу.</p>
+  </section>
+
+  <section class="panel" id="p-now" hidden></section>
+  <section class="panel" id="p-roles" hidden></section>
+  <section class="panel" id="p-rules" hidden></section>
+  <section class="panel setup" id="p-setup" hidden></section>
+
+  <footer class="foot">
+    <p>Чтобы открывать как приложение: меню браузера → «Добавить на главный экран».</p>
+    <button class="lnk" id="loginbtn" type="button">Для руководителя</button>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" hidden>
+  <div class="dr-h"><h2 id="dr-title"></h2><button class="dr-x" id="dr-x" aria-label="Закрыть">×</button></div>
+  <div class="dr-b" id="dr-b"></div>
+</aside>
+
+<script id="seed" type="application/json">{"v": 1, "meta": {"title": "Таймлайн смены кухни", "sub": "Утро с 07:00: старший повар и повар (07:00–07:05 кофе-брейк), Хамид с 08:00 (XFit и заготовки). Су-шеф с 13:00 до 21:00, горячник и холодник с 14:00 до 22:00; Хамид возвращается в 19:00. Все приходят уже переодетыми. Открытие расписано по мануалу, остальное время — черновик."}, "lanes": [{"id": "st", "role": "Старший повар", "cls": "su", "shift": "утро", "frm": 420, "to": 900}, {"id": "pu", "role": "Повар", "cls": "p", "shift": "утро", "frm": 420, "to": 900}, {"id": "hm", "role": "Хамид", "cls": "ham", "shift": "утро", "frm": 480, "to": 780}, {"id": "sf", "role": "Су-шеф", "cls": "su", "shift": "вечер", "frm": 780, "to": 1260}, {"id": "gc", "role": "Горячник", "cls": "gc", "shift": "вечер", "frm": 840, "to": 1320}, {"id": "xc", "role": "Холодник", "cls": "xc", "shift": "вечер", "frm": 840, "to": 1320}, {"id": "hv", "role": "Хамид", "cls": "ham", "shift": "вечер", "frm": 1140, "to": 1320}], "types": [{"id": "arrival", "name": "Приход, кофе-брейк"}, {"id": "setup", "name": "Подготовка, затарка"}, {"id": "prep", "name": "Заготовки"}, {"id": "line", "name": "Линия, отдача"}, {"id": "control", "name": "Контроль, бракераж, обход"}, {"id": "handoff", "name": "Передача станции / смены"}, {"id": "docs", "name": "Заявка, документы, приёмка"}, {"id": "meeting", "name": "5-минутка"}, {"id": "clean", "name": "Уборка, закрытие"}], "tasks": [{"id": "st1", "lane": "st", "type": "arrival", "phase": "open", "title": "Кофе-брейк", "s": 420, "e": 425, "desc": "Все приходят уже переодетыми: к 07:00 вы в рабочей униформе. С 07:00 до 07:05 — кофе-брейк.\n\n1. Отметиться в журнале прихода/ухода, обработать руки.\n2. Приготовить кофе, настроиться на смену.\n3. Ровно 5 минут, затем — проверка повара и задачи на открытие.", "guess": false, "cross": false, "crossNote": ""}, {"id": "st2", "lane": "st", "type": "control", "phase": "open", "title": "Технический и санитарный обход кухни + заполнение электронных чек-листов", "s": 430, "e": 445, "desc": "Во время обхода заполняйте электронный чек-лист обхода кухни — сразу по ходу, не после.\n\nТехническое и санитарное состояние кухни:\n1. Проверить чистоту рабочих поверхностей, оборудования (внутри и снаружи), пола и стен.\n2. Проверить соответствие Правилам пищевой безопасности.\n3. Проверить техническое состояние кухни:\na. Исправность приточно-вытяжной системы\nb. Стоки в раковинах и в полу (не забиты)\nc. Работоспособность розеток\nd. Целостность поверхностей (стены, пол и т.д.)\ne. В случае неисправности — сделать заявку в техническую службу\n4. Проверить исправность оборудования:\na. Температурный режим всего холодильного оборудования (холодильники, морозильники, камеры)\nb. Исправность и состояние теплового оборудования\nc. Исправность нейтрально-технического оборудования (блендеры, мясорубки, рисоварка и пр.)\nd. Получить обратную связь по работе оборудования от повара\ne. Убедиться, что всё тепловое и холодильное оборудование включено и готово к работе", "guess": false, "cross": false, "crossNote": ""}, {"id": "st3", "lane": "st", "type": "control", "phase": "open", "title": "Проверка готовности станции к открытию", "s": 445, "e": 450, "desc": "1. Обойти станцию ГЦ/ХЦ и подтвердить готовность позиции к смене: инвентарь, посуда, хозы, продукты, П/Ф.\n2. Собрать от повара информацию по позициям на ограничении и кандидатам в Stop/Go-лист.\n3. Проанализировать преп-лист, расставить приоритеты по заготовкам.\n4. Убедиться, что П/Ф на станции вскрыты и выставлены к бракеражу.\n\nБракераж — отдельной задачей (см. «Бракераж П/Ф»).", "guess": false, "cross": false, "crossNote": ""}, {"id": "st4", "lane": "st", "type": "control", "phase": "open", "title": "Бракераж П/Ф", "s": 450, "e": 455, "desc": "Бракеражу подлежат все П/Ф, которые уже есть на станции (не приготовленные сегодня). Повар заранее вскрывает их и выставляет на ложке / в соуснике.\n\n1. Попробовать каждый П/Ф и убедиться, что:\n- П/Ф приготовлен по утвержденной ТТК\n- Органолептические качества соответствуют стандарту\n- Срок годности и маркировка в порядке\n- Объем достаточен согласно преп-листу станции\n\n2. По каждому П/Ф принять решение:\n- Соответствует — допускается к реализации\n- Можно доработать — дать задачу повару исправить П/Ф\n- Нельзя исправить до начала смены — блюдо в Stop-лист с причиной; если есть продукты — дать задачу немедленно приготовить заново\n- Объема мало — позиция на ограничение, приоритет в преп-листе\n- Нужно срочно продать — в Go-лист\n\n3. Зафиксировать бракераж в журнале.\n4. Зафиксировать списание продуктов на бракераж.", "guess": false, "cross": false, "crossNote": ""}, {"id": "st5", "lane": "st", "type": "docs", "phase": "open", "title": "Заполнение журналов", "s": 455, "e": 460, "desc": "Журналы к заполнению:\n1. Журнал здоровья (гнойничковые инфекции и т.п.)\n2. Журнал температурного режима холодильного оборудования\n3. Журнал бракеража\n4. Журнал контроля работы бактерицидных ламп (при наличии)\n5. Журнал учета использования фритюрных жиров (при наличии фритюра)\n\n[Уточнить итоговый перечень журналов кухни]", "guess": false, "cross": false, "crossNote": ""}, {"id": "st6", "lane": "st", "type": "docs", "phase": "open", "title": "Составить Stop/Go-лист по итогам бракеража", "s": 460, "e": 465, "desc": "Stop/Go-лист составляется только по итогам бракеража и до начала 5-минутки.\n\nПравила заполнения Stop/Go-листа:\n1. Указать отсутствующие позиции + время/дату снятия со стопа.\n2. Указать позиции с ограниченным количеством порций + время снятия ограничения + причину ограничения или стопа.\n3. Указать позиции, которые требуется продать в срочном порядке (Go-лист).\n\nПравила передачи информации в зал (см. задачу 8):\na. Передать Stop/Go-лист администратору зала / старшему официанту.\nb. Продублировать Stop/Go-лист в рабочий чат «Stop list» [уточнить мессенджер].\n\n4. Отправить фото заполненных бракеражных листов в фото-отчет.", "guess": false, "cross": false, "crossNote": ""}, {"id": "st7", "lane": "st", "type": "meeting", "phase": "open", "title": "Провести 5-минутку кухни", "s": 465, "e": 475, "desc": "Информацию для 5-минутки собирайте заранее, по ходу открытия (отдельного слота на подготовку нет).\n\nПравила проведения:\n1. Проводится стоя, не дольше 10 минут.\n2. Начинается с приветствия, завершается благодарностью.\n3. Присутствует вся кухня — от начала до конца, никто не отвлекается на заготовки.\n4. Уточнить, есть ли вопросы по информации и поставленным задачам.\n5. Собрать обратную связь и предложения.\n6. Позитивная манера, без жаргона и ненормативной лексики. Открытые позы, зрительный контакт.\n\nСтруктура 5-минутки:\n1. Бронирования на сегодня (кол-во броней, банкеты)\n2. Stop/Go-лист\n3. VIP-гости\n4. Изменения в составе блюд / меню\n5. Пищевая безопасность (мини-тренинг, 1 тема)\n6. Новости заведения, анонсы\n7. Анализ предыдущей смены, отзывы\n8. Дни рождения\n9. Мотивация (премии, если выполнены KPI)", "guess": false, "cross": false, "crossNote": ""}, {"id": "st8", "lane": "st", "type": "handoff", "phase": "open", "title": "Передать Stop/Go-лист и меню в зал", "s": 475, "e": 480, "desc": "Передать сотрудникам зала:\n1. Актуальный Stop/Go-лист и блюда дня.\n2. Изменения в технологии, составе или подаче блюд.\n3. Ответить на вопросы официантов по меню, составу, аллергенам.\n\nПолучить от зала:\n4. Брони, VIP-гости, банкеты на сегодня.\n5. Отзывы гостей по кухне за предыдущую смену.\n\nК 08:00 — кухня готова к сервису.", "guess": false, "cross": false, "crossNote": ""}, {"id": "st9", "lane": "st", "type": "control", "phase": "service", "title": "Поставить задачи Хамиду: XFit и заготовки", "s": 480, "e": 490, "desc": "1. Принять Хамида: проверить приход и внешний вид.\n2. Поставить задачи: сначала проверка заготовок XFit, затем заготовки кухни по преп-листу.\n3. Если заготовок для XFit нет — назначить Хамида на горячую станцию.\n4. Озвучить приоритеты по преп-листу и время готовности.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st10", "lane": "st", "type": "line", "phase": "service", "title": "Раздача и контроль качества", "s": 490, "e": 600, "desc": "1. Стоять на раздаче: проверять блюда перед подачей (вид, температура, соответствие ТТК).\n2. Следить за временем отдачи заказов.\n3. Помогать на линии, если копится очередь заказов.\n4. При изменении Stop/Go-листа сразу сообщать в зал.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st11", "lane": "st", "type": "control", "phase": "service", "title": "Проверка холодильников: заготовки, XFit, Stop/Go", "s": 600, "e": 630, "desc": "1. Проверить количество и качество заготовок в холодильниках, в том числе заготовок XFit.\n2. По итогам проверки составить Stop-лист и Go-лист.\n3. Передать изменения в зал.\n4. Скорректировать преп-лист.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st12", "lane": "st", "type": "docs", "phase": "service", "title": "Приёмка товара, проверка накладных", "s": 630, "e": 660, "desc": "1. Принять товар от поставщиков: количество, качество, сроки годности, температура.\n2. Сверить с накладной, зафиксировать расхождения.\n3. Разложить продукты по местам хранения (первым расходуется то, что поступило раньше).", "guess": true, "cross": false, "crossNote": ""}, {"id": "st13", "lane": "st", "type": "prep", "phase": "service", "title": "Заготовки по преп-листу, помощь на линии", "s": 660, "e": 760, "desc": "1. Заготовки строго по преп-листу в порядке приоритета.\n2. Готовить по ТТК, маркировать каждый П/Ф.\n3. При очереди заказов — помогать на линии.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st14", "lane": "st", "type": "handoff", "phase": "service", "title": "Подготовить передачу смены", "s": 760, "e": 780, "desc": "1. Проверить остатки П/Ф и продуктов.\n2. Обновить преп-лист для вечерней смены.\n3. Подготовить Stop/Go-лист и информацию по броням, VIP-гостям, замечаниям.\n4. Проверить, что станции убраны и промаркированы.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st15", "lane": "st", "type": "handoff", "phase": "service", "title": "Передать смену су-шефу", "s": 780, "e": 795, "desc": "1. Передать остатки, преп-лист и Stop/Go-лист.\n2. Рассказать о неисправностях оборудования, замечаниях гостей, бронях и банкетах.\n3. Отметиться в журнале ухода.", "guess": true, "cross": false, "crossNote": ""}, {"id": "st16", "lane": "st", "type": "docs", "phase": "service", "title": "Административные задачи, беседы с официантами", "s": 840, "e": 900, "desc": "1. Административные задачи: графики, учёт, документы [уточнить].\n2. По необходимости — беседы с официантами по меню и сервису.", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu1", "lane": "pu", "type": "arrival", "phase": "open", "title": "Кофе-брейк", "s": 420, "e": 425, "desc": "К 07:00 вы уже переодеты в рабочую униформу: переодеваться нужно до начала смены, все задачи на позиции выполняются только в униформе.\n\n1. Отметиться в журнале прихода/ухода, обработать руки (антисептик / мыло).\n2. Приготовить кофе, лёгкий перекус, настроиться на смену.\n3. Строго 5 минут, затем — получить задачи от старшего повара.\n\nПравила внешнего вида:\na. Чистая, хорошо отглаженная униформа\nb. Полная комплектация униформы\nc. Чистая обувь\nd. Отсутствие посторонних запахов\ne. Убранные волосы\nf. Аккуратные ногти\ng. Отсутствие украшений\nh. Открытые раны обработаны, наложен пластырь", "guess": false, "cross": false, "crossNote": ""}, {"id": "pu3", "lane": "pu", "type": "setup", "phase": "open", "title": "Подготовка горячего/холодного цеха к открытию", "s": 425, "e": 445, "desc": "Алгоритм подготовки станции:\n1. Продезинфицировать рабочие поверхности, проверить чистоту пола и стен.\n2. Проверить соблюдение Правил пищевой безопасности:\na. Маркировка полок, холодильников, досок, ножей\nb. Маркировка каждого П/Ф (наименование, дата и время изготовления, срок годности)\nc. Наличие дез. раствора\nd. Отсутствие личных вещей на рабочем месте\n3. Затарить станцию:\na. Хозы (перчатки, пленка, салфетки, дез. раствор)\nb. Инвентарь\nc. Посуда для подачи блюд\nd. Всё необходимое для бесперебойной работы — в радиусе ±2 метра\n4. Вскрыть и подготовить к бракеражу старшему повару все имеющиеся на станции П/Ф: выложить на ложку / в соусник / на тарелку.\n5. Проанализировать текущий остаток П/Ф и сверить с преп-листом, оставленным вечерней сменой. При необходимости скорректировать преп-лист.\n\nП/Ф ГЦ/ХЦ к бракеражу (уточнить под меню):\na. Бульоны\nb. Супы\nc. Горячие соусы\nd. Дрессинги\ne. Фарши\nf. Мясные/рыбные П/Ф\ng. Гарниры\n\nРезультат: к началу проверки старшего повара станция затарена, П/Ф выставлены к бракеражу.", "guess": false, "cross": false, "crossNote": ""}, {"id": "pu4", "lane": "pu", "type": "setup", "phase": "open", "title": "Подготовить раздачу к сервису", "s": 445, "e": 455, "desc": "1. Проверить чистоту рабочей поверхности и холодильного оборудования раздачи. При необходимости провести санитарную обработку внутри и снаружи.\n2. Проверить соответствие Правилам пищевой безопасности:\na. Маркировка полок, холодильников, досок, ножей\nb. Маркировка каждого П/Ф\nc. Наличие дез. раствора\nd. Отсутствие личных вещей на рабочих местах\n3. Принести необходимый инвентарь и разложить на раздаче.\n4. Включить тепловое оборудование раздачи (при наличии).\n5. Заполнить раздачу посудой для сервировки блюд.\n6. Всё необходимое для бесперебойной работы — в радиусе ±2 метра.\n7. Заполнить раздачу продуктами и П/Ф в количестве, необходимом для сервиса.", "guess": false, "cross": true, "crossNote": "Повар готовит раздачу вместо старшего повара (в исходном мануале это задача су-шефа)."}, {"id": "pu5", "lane": "pu", "type": "prep", "phase": "open", "title": "Заготовки по преп-листу — горячий/холодный цех", "s": 455, "e": 465, "desc": "1. Выполнять заготовки строго по преп-листу в порядке приоритета, установленного старшим поваром.\n2. В первую очередь — позиции, из-за которых блюдо может попасть в Stop-лист.\n3. Готовить по ТТК. Маркировать каждый П/Ф.\n4. Незавершенные позиции — доделать в ведении смены в периоды низкой загрузки.", "guess": false, "cross": false, "crossNote": ""}, {"id": "pu6", "lane": "pu", "type": "meeting", "phase": "open", "title": "Участвовать в 5-минутке кухни", "s": 465, "e": 475, "desc": "1. Присутствовать с начала до конца, не отвлекаться на заготовки.\n2. Задать вопросы по поставленным задачам и Stop/Go-листу.\n3. Дать обратную связь по станции: чего не хватает, что может уйти в Stop.", "guess": false, "cross": false, "crossNote": ""}, {"id": "pu7", "lane": "pu", "type": "setup", "phase": "open", "title": "Дозатарить станцию и быть готовым к сервису", "s": 475, "e": 480, "desc": "1. Устранить замечания старшего повара по итогам проверки станции и бракеража.\n2. Довыставить П/Ф к бракеражу, если чего-то не хватило; доделать незавершенные заготовки (в первую очередь — позиции, из-за которых блюдо может попасть в Stop-лист).\n3. Дозатарить станцию и раздачу, проверить остатки по преп-листу.\n4. К 08:00 — на станции, готов принимать заказы.", "guess": false, "cross": false, "crossNote": ""}, {"id": "pu8", "lane": "pu", "type": "line", "phase": "service", "title": "Линия: заказы по ТТК", "s": 480, "e": 690, "desc": "1. Готовить заказы строго по ТТК и в порядке очереди.\n2. Контролировать выход, вид и температуру подачи.\n3. Пополнять П/Ф на раздаче; при нехватке сообщить старшему повару (возможен Stop-лист).\n4. Поддерживать чистоту станции по ходу работы.", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu9", "lane": "pu", "type": "prep", "phase": "service", "title": "Заготовки по преп-листу на вечер", "s": 690, "e": 810, "desc": "1. Выполнять заготовки строго по преп-листу в порядке приоритета, установленного старшим поваром.\n2. В первую очередь — позиции, из-за которых блюдо может попасть в Stop-лист.\n3. Готовить по ТТК. Маркировать каждый П/Ф.\n\n[Уточнить, какие заготовки делает Хамид, а какие повар]", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu10", "lane": "pu", "type": "handoff", "phase": "service", "title": "Подготовить станцию к передаче", "s": 810, "e": 840, "desc": "1. Проверить остатки П/Ф, маркировку и сроки годности.\n2. Пополнить заготовки по преп-листу.\n3. Записать остатки и замечания для горячника и холодника.", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu11", "lane": "pu", "type": "handoff", "phase": "service", "title": "Передать станции горячнику и холоднику", "s": 840, "e": 850, "desc": "1. Показать остатки П/Ф и заготовки.\n2. Передать преп-лист и замечания по станциям и оборудованию.", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu12", "lane": "pu", "type": "clean", "phase": "service", "title": "Уборка станции и инвентаря", "s": 850, "e": 890, "desc": "1. Вымыть и продезинфицировать поверхности, оборудование и пол у станции.\n2. Убрать инвентарь, промаркировать и убрать П/Ф.\n3. Отметиться в журнале ухода.", "guess": true, "cross": false, "crossNote": ""}, {"id": "pu13", "lane": "pu", "type": "clean", "phase": "service", "title": "Вынести мусор", "s": 890, "e": 900, "desc": "1. Вынести мусор со станции и кухни.\n2. Проверить, что баки и контейнеры закрыты, пол чистый.", "guess": false, "cross": false, "crossNote": ""}, {"id": "hm1", "lane": "hm", "type": "arrival", "phase": "service", "title": "Получить задачи от старшего повара", "s": 480, "e": 490, "desc": "Хамид приходит уже переодетым: переодеваться нужно до начала смены.\n\n1. Отметиться в журнале прихода/ухода, обработать руки.\n2. Получить задачи от старшего повара: заготовки XFit и заготовки кухни.", "guess": false, "cross": false, "crossNote": ""}, {"id": "hm2", "lane": "hm", "type": "control", "phase": "service", "title": "Контроль заготовок XFit", "s": 490, "e": 520, "desc": "1. Проверить заготовки для XFit: что осталось с вечера (салаты и боулы в контейнерах).\n2. Сверить количество с заказом XFit.\n3. Проверить качество, маркировку и срок годности (срок хранения — 2 дня).\n4. Если чего-то не хватает — сообщить старшему повару.\n5. Если заготовок для XFit нет — перейти на горячую станцию (следующая задача).\n\n[Уточнить время отправки и количество порций]", "guess": true, "cross": false, "crossNote": ""}, {"id": "hm3", "lane": "hm", "type": "line", "phase": "service", "title": "XFit или горячая станция", "s": 520, "e": 630, "desc": "Если для XFit нужны заготовки:\n1. Приготовить недостающее по ТТК, упаковать в контейнеры, промаркировать.\n2. Подготовить отправку XFit.\n\nЕсли заготовок для XFit нет:\n1. Работать на горячей станции вместе с поваром.\n2. Готовить заказы по ТТК, поддерживать чистоту станции.", "guess": true, "cross": true, "crossNote": "Если заготовок для XFit нет, Хамид работает на горячей станции."}, {"id": "hm4", "lane": "hm", "type": "prep", "phase": "service", "title": "Заготовки кухни по преп-листу", "s": 630, "e": 720, "desc": "1. Заготовки строго по преп-листу в порядке приоритета старшего повара.\n2. Готовить по ТТК, маркировать каждый П/Ф.\n3. Незавершённое передать старшему повару.\n\n[Уточнить список заготовок]", "guess": true, "cross": false, "crossNote": ""}, {"id": "hm5", "lane": "hm", "type": "clean", "phase": "service", "title": "Убрать рабочее место, передать остатки", "s": 720, "e": 730, "desc": "1. Убрать рабочее место и инвентарь.\n2. Убрать П/Ф и заготовки XFit в холодильник, промаркировать.\n3. Передать старшему повару остатки и невыполненные заготовки.\n4. Отметиться в журнале ухода.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc1", "lane": "gc", "type": "handoff", "phase": "service", "title": "Принять горячую станцию от повара", "s": 840, "e": 850, "desc": "1. Прийти уже переодетым (переодеваться нужно до начала смены), отметиться в журнале прихода/ухода, обработать руки.\n2. Принять станцию: остатки П/Ф, маркировка, сроки годности.\n3. Уточнить замечания и преп-лист.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc2", "lane": "gc", "type": "setup", "phase": "service", "title": "Затарка горячей станции", "s": 850, "e": 885, "desc": "1. Затарить станцию: хозы, инвентарь, посуда.\n2. Выставить П/Ф, проверить маркировку и сроки.\n3. Сверить остатки с преп-листом.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc3", "lane": "gc", "type": "meeting", "phase": "service", "title": "Участвовать в 5-минутке вечерней смены", "s": 885, "e": 895, "desc": "1. Присутствовать с начала до конца, не отвлекаться на заготовки.\n2. Задать вопросы по задачам и Stop/Go-листу.\n3. Дать обратную связь по станции: чего не хватает, что может уйти в Stop.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc4", "lane": "gc", "type": "prep", "phase": "service", "title": "Заготовки горячего цеха на вечер", "s": 895, "e": 990, "desc": "1. Выполнять заготовки строго по преп-листу в порядке приоритета.\n2. В первую очередь — позиции, из-за которых блюдо может попасть в Stop-лист.\n3. Готовить по ТТК. Маркировать каждый П/Ф.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc5", "lane": "gc", "type": "line", "phase": "service", "title": "Горячая линия: заказы по ТТК", "s": 990, "e": 1140, "desc": "1. Готовить заказы строго по ТТК и в порядке очереди.\n2. Контролировать выход, вид и температуру подачи.\n3. Пополнять П/Ф на станции; при нехватке сообщить су-шефу.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc6", "lane": "gc", "type": "line", "phase": "service", "title": "Вечерний пик: горячая станция", "s": 1140, "e": 1260, "desc": "1. Готовить заказы по ТТК, держать темп отдачи.\n2. Не допускать нехватки П/Ф на станции.\n3. Сообщать су-шефу о позициях на ограничении.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc7", "lane": "gc", "type": "clean", "phase": "close", "title": "Уборка горячей станции", "s": 1260, "e": 1315, "desc": "1. Вымыть и продезинфицировать поверхности, оборудование и пол.\n2. Убрать инвентарь, промаркировать и убрать П/Ф.\n3. Записать остатки П/Ф для утреннего повара.", "guess": true, "cross": false, "crossNote": ""}, {"id": "gc8", "lane": "gc", "type": "clean", "phase": "close", "title": "Вынести мусор", "s": 1315, "e": 1320, "desc": "1. Вынести мусор со станции и кухни.\n2. Проверить, что баки и контейнеры закрыты, пол чистый.", "guess": false, "cross": false, "crossNote": ""}, {"id": "xc1", "lane": "xc", "type": "handoff", "phase": "service", "title": "Принять холодную станцию от повара", "s": 840, "e": 850, "desc": "1. Прийти уже переодетым (переодеваться нужно до начала смены), отметиться в журнале прихода/ухода, обработать руки.\n2. Принять станцию: остатки П/Ф, маркировка, сроки годности.\n3. Уточнить замечания и преп-лист.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc2", "lane": "xc", "type": "setup", "phase": "service", "title": "Затарка холодной станции", "s": 850, "e": 885, "desc": "1. Затарить станцию: хозы, инвентарь, посуда.\n2. Выставить П/Ф, проверить маркировку и сроки.\n3. Сверить остатки с преп-листом.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc3", "lane": "xc", "type": "meeting", "phase": "service", "title": "Участвовать в 5-минутке вечерней смены", "s": 885, "e": 895, "desc": "1. Присутствовать с начала до конца, не отвлекаться на заготовки.\n2. Задать вопросы по задачам и Stop/Go-листу.\n3. Дать обратную связь по станции: чего не хватает, что может уйти в Stop.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc4", "lane": "xc", "type": "prep", "phase": "service", "title": "Заготовки холодного цеха на вечер", "s": 895, "e": 990, "desc": "1. Выполнять заготовки строго по преп-листу в порядке приоритета.\n2. В первую очередь — позиции, из-за которых блюдо может попасть в Stop-лист.\n3. Готовить по ТТК. Маркировать каждый П/Ф.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc5", "lane": "xc", "type": "line", "phase": "service", "title": "Холодная линия: заказы по ТТК", "s": 990, "e": 1140, "desc": "1. Готовить заказы строго по ТТК и в порядке очереди.\n2. Контролировать выход, вид и температуру подачи.\n3. Пополнять П/Ф на станции; при нехватке сообщить су-шефу.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc6", "lane": "xc", "type": "line", "phase": "service", "title": "Вечерний пик: холодная станция", "s": 1140, "e": 1260, "desc": "1. Готовить заказы по ТТК, держать темп отдачи.\n2. Не допускать нехватки П/Ф на станции.\n3. Сообщать су-шефу о позициях на ограничении.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc7", "lane": "xc", "type": "clean", "phase": "close", "title": "Уборка холодной станции", "s": 1260, "e": 1315, "desc": "1. Вымыть и продезинфицировать поверхности, оборудование и пол.\n2. Убрать инвентарь, промаркировать и убрать П/Ф.\n3. Записать остатки П/Ф для утреннего повара.", "guess": true, "cross": false, "crossNote": ""}, {"id": "xc8", "lane": "xc", "type": "clean", "phase": "close", "title": "Вынести мусор", "s": 1315, "e": 1320, "desc": "1. Вынести мусор со станции и кухни.\n2. Проверить, что баки и контейнеры закрыты, пол чистый.", "guess": false, "cross": false, "crossNote": ""}, {"id": "hv1", "lane": "hv", "type": "arrival", "phase": "service", "title": "Получить задачи от су-шефа", "s": 1140, "e": 1150, "desc": "Хамид приходит уже переодетым: переодеваться нужно до начала смены.\n\n1. Отметиться в журнале прихода/ухода, обработать руки.\n2. Получить от су-шефа список блюд и количество порций для XFit на утро.", "guess": false, "cross": false, "crossNote": ""}, {"id": "hv2", "lane": "hv", "type": "prep", "phase": "service", "title": "Приготовить еду для XFit на утро", "s": 1150, "e": 1275, "desc": "1. Приготовить салаты и боулы для XFit по ТТК и заказу на утро.\n2. Фасовать в контейнеры, маркировать (название, дата и время, срок годности — 2 дня).\n3. Убирать готовое в холодильник по мере готовности.\n\n[Уточнить список блюд и количество порций]", "guess": true, "cross": false, "crossNote": ""}, {"id": "hv3", "lane": "hv", "type": "setup", "phase": "close", "title": "Фасовка, маркировка и хранение XFit", "s": 1275, "e": 1300, "desc": "1. Проверить, что всё упаковано и промаркировано.\n2. Сверить количество с заказом XFit.\n3. Убрать в холодильник, оставить записку старшему повару для проверки утром.", "guess": true, "cross": false, "crossNote": ""}, {"id": "hv4", "lane": "hv", "type": "clean", "phase": "close", "title": "Убрать рабочее место", "s": 1300, "e": 1315, "desc": "1. Вымыть и продезинфицировать рабочее место, инвентарь и оборудование.\n2. Отметиться в журнале ухода.", "guess": true, "cross": false, "crossNote": ""}, {"id": "hv5", "lane": "hv", "type": "clean", "phase": "close", "title": "Вынести мусор", "s": 1315, "e": 1320, "desc": "1. Вынести мусор со станции и кухни.\n2. Проверить, что баки и контейнеры закрыты, пол чистый.", "guess": false, "cross": false, "crossNote": ""}, {"id": "st17", "lane": "st", "type": "control", "phase": "open", "title": "Проверить внешний вид повара, поставить задачи на открытие", "s": 425, "e": 430, "desc": "Выполняется сразу после кофе-брейка.\n\n1. Проверить, что повар пришёл вовремя и согласно графику.\n2. Проверить повара на соответствие Правилам внешнего вида (вкладка «Правила», карточка «Правила внешнего вида»).\n- Нарушение: сделать замечание и устранить до начала смены. Если невозможно — допустить на смену с условием устранить к следующей смене, проконтролировать.\n- Повторное нарушение: не допускать до устранения, депремировать (желтая карта) [уточнить].\n3. Поставить задачи на открытие:\na. Повару — горячий/холодный цех и раздача\nb. Хамиду (придёт в 08:00) — заготовки XFit и заготовки кухни\nc. Озвучить приоритеты по преп-листам, оставленным вечерней сменой\nd. Озвучить время, к которому станция должна быть готова к проверке и бракеражу (07:25)", "guess": false, "cross": false, "crossNote": ""}, {"id": "st18", "lane": "st", "type": "prep", "phase": "service", "title": "Заготовки по преп-листу, помощь на линии", "s": 795, "e": 840, "desc": "1. Заготовки строго по преп-листу в порядке приоритета.\n2. Готовить по ТТК, маркировать каждый П/Ф.\n3. При очереди заказов — помогать на линии.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf1", "lane": "sf", "type": "handoff", "phase": "service", "title": "Принять смену от старшего повара", "s": 780, "e": 795, "desc": "1. Прийти уже переодетым (переодеваться нужно до начала смены), отметиться в журнале прихода/ухода, обработать руки.\n2. Получить остатки, преп-лист, Stop/Go-лист и информацию по броням.\n3. Уточнить неисправности оборудования и замечания гостей.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf2", "lane": "sf", "type": "control", "phase": "service", "title": "Проверить фактические остатки", "s": 795, "e": 825, "desc": "1. Проверить фактические остатки П/Ф и продуктов, сверить с преп-листом.\n2. Обновить Stop/Go-лист и передать изменения в зал.\n3. Расставить приоритеты по заготовкам на вечер.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf3", "lane": "sf", "type": "prep", "phase": "service", "title": "Заготовки по преп-листу, задачи второй смене в 14:00", "s": 825, "e": 885, "desc": "1. Заготовки по преп-листу.\n2. В 14:00, когда приходят горячник и холодник, озвучить приоритеты на вечер и проконтролировать приём станций от повара.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf4", "lane": "sf", "type": "meeting", "phase": "service", "title": "Провести 5-минутку вечерней смены", "s": 885, "e": 895, "desc": "1. Брони и банкеты на вечер.\n2. Stop/Go-лист.\n3. VIP-гости.\n4. Изменения в меню.\n5. Задачи на смену.\n\nПравила проведения — на вкладке «Правила».", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf5", "lane": "sf", "type": "prep", "phase": "service", "title": "Заготовки по преп-листу", "s": 895, "e": 1080, "desc": "1. Заготовки строго по преп-листу в порядке приоритета.\n2. Готовить по ТТК, маркировать каждый П/Ф.\n3. Параллельно помогать с отдачей заказов на кухне и официантам.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf6", "lane": "sf", "type": "control", "phase": "service", "title": "Вечерний обход и контроль станций", "s": 1080, "e": 1140, "desc": "1. Обойти станции: чистота, маркировка, температура холодильников.\n2. Проверить остатки перед вечерним пиком, довыставить П/Ф.\n3. Обновить Stop/Go-лист.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf7", "lane": "sf", "type": "line", "phase": "service", "title": "Отдача заказов: раздача и контроль качества", "s": 1140, "e": 1215, "desc": "1. Держать раздачу: проверять блюда перед подачей (вид, температура, соответствие ТТК).\n2. Контролировать время отдачи, передавать заказы официантам.\n3. Помогать на линии при очереди заказов.\n4. Сообщать в зал об изменениях по Stop-листу.", "guess": true, "cross": false, "crossNote": ""}, {"id": "sf8", "lane": "sf", "type": "docs", "phase": "service", "title": "Заявка закупщику (срок — до 21:00)", "s": 1215, "e": 1245, "desc": "Заявку нужно составить и отправить до 21:00.\n\n1. Проверить остатки и расход за день.\n2. Составить заказ закупщику на завтра.\n3. Отправить заказ — до 21:00.", "guess": false, "cross": false, "crossNote": ""}, {"id": "sf9", "lane": "sf", "type": "handoff", "phase": "service", "title": "Stop-лист и преп-лист на утро, передача смены", "s": 1245, "e": 1260, "desc": "1. Составить Stop-лист на утро и преп-лист на утро.\n2. Оставить записку: остатки, проблемы, замечания; передать горячнику и холоднику.\n3. Отметиться в журнале ухода.", "guess": true, "cross": false, "crossNote": ""}, {"id": "nmve399bldx", "lane": "sf", "type": "prep", "phase": "close", "title": "Новая задача", "s": 1270, "e": 1300, "desc": "", "guess": false, "cross": false, "crossNote": ""}], "milestones": [{"t": 420, "label": "Открытие кухни"}, {"t": 480, "label": "Сервис"}, {"t": 780, "label": "Приход су-шефа"}, {"t": 840, "label": "Передача смены"}, {"t": 1260, "label": "Заявка закупщику — до 21:00"}, {"t": 1320, "label": "Закрытие кухни"}], "rules": [{"title": "Приход на смену", "groups": [{"h": "Переодевание", "items": ["Все сотрудники переодеваются до начала своей смены и приходят на позицию уже в рабочей униформе", "Внешний вид проверяется по карточке «Правила внешнего вида»"]}, {"h": "Утро", "items": ["07:00–07:05 — кофе-брейк (старший повар и повар), затем открытие кухни"]}, {"h": "По приходу", "items": ["Отметиться в журнале прихода/ухода и обработать руки"]}], "noteEnd": false}, {"title": "Правила внешнего вида", "groups": [{"items": ["Чистая, хорошо отглаженная униформа", "Полная комплектация униформы", "Чистая обувь", "Отсутствие посторонних запахов", "Убранные волосы", "Аккуратные ногти", "Отсутствие украшений", "Открытые раны обработаны, наложен пластырь"]}], "note": "Нарушение: замечание и устранение до начала смены. Повторное нарушение: не допускать до устранения [уточнить меру].", "noteEnd": true}, {"title": "Бракераж П/Ф", "note": "Бракеражу подлежат все П/Ф, которые уже есть на станции, не приготовленные сегодня. Повар заранее вскрывает их и выставляет на ложке или в соуснике.", "groups": [{"h": "Проверить", "items": ["П/Ф приготовлен по утверждённой ТТК", "Органолептика соответствует стандарту", "Срок годности и маркировка в порядке", "Объём достаточен по преп-листу станции"]}, {"h": "Решение по каждому П/Ф", "items": ["Соответствует — допускается к реализации", "Можно доработать — задача повару", "Нельзя исправить до начала смены — в Stop-лист с причиной; если есть продукты, приготовить заново", "Объёма мало — позиция на ограничение, приоритет в преп-листе", "Нужно срочно продать — в Go-лист"]}], "noteEnd": false}, {"title": "Stop/Go-лист", "groups": [{"h": "Что указать", "items": ["Отсутствующие позиции + время/дата снятия со стопа", "Позиции с ограниченным количеством порций + время снятия + причина", "Позиции, которые нужно продать срочно (Go-лист)"]}, {"h": "Куда передать", "items": ["Администратору зала / старшему официанту", "Продублировать в рабочий чат «Stop list» [уточнить мессенджер]", "Фото бракеражных листов — в фото-отчёт"]}], "note": "Составляется только по итогам бракеража и до начала 5-минутки.", "noteEnd": true}, {"title": "5-минутка кухни", "groups": [{"h": "Правила", "items": ["Стоя, не дольше 10 минут", "Начало с приветствия, конец с благодарности", "Присутствует вся кухня, никто не отвлекается на заготовки", "Уточнить вопросы по информации и задачам", "Собрать обратную связь", "Позитивная манера, без жаргона и ненормативной лексики"]}, {"h": "Структура", "items": ["Бронирования на сегодня", "Stop/Go-лист", "VIP-гости", "Изменения в составе блюд / меню", "Пищевая безопасность (мини-тренинг, 1 тема)", "Новости заведения, анонсы", "Анализ предыдущей смены, отзывы", "Дни рождения", "Мотивация (премии при выполнении KPI)"]}], "noteEnd": false}, {"title": "Станция к проверке", "groups": [{"items": ["Дезинфекция поверхностей, чистые пол и стены", "Маркировка полок, холодильников, досок, ножей и каждого П/Ф (название, дата и время, срок годности)", "Дез. раствор на месте, личных вещей на станции нет", "Хозы, инвентарь и посуда для подачи — в радиусе ±2 метра", "Все П/Ф вскрыты и выставлены к бракеражу"]}], "noteEnd": false}], "rev": 1}</script>
+<script>
+(function () {
+  /* Расписание берётся из data.json рядом со страницей. Запасные варианты, если связи нет:
+     последняя удачно загруженная копия (в браузере) и снимок, вшитый в эту страницу. */
+  var POLL = window.__POLL_MS || 300000, DATA_URL = 'data.json', CACHE_KEY = 'kitchen-data';
+  var ED = null, D = (function () {
+    var seed = JSON.parse(document.getElementById('seed').textContent), c = null;
+    if (seed.rev == null) seed.rev = 1;
+    try { c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) {}
+    return c && c.tasks && c.lanes && c.types && (c.rev || 0) >= seed.rev ? c : seed;
+  })();
+  var T0 = 390, T1 = 1350;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var byId = {}, laneById = {}, typeById = {};
+  var PH = { open: 'Открытие', service: 'Ведение смены', close: 'Закрытие' };
+  var PHW = { all: [T0, T1], open: [420, 480], service: [480, 1260], close: [1260, 1320] };
+  var PALETTE = [['su', 'Красный'], ['p', 'Зелёный'], ['ham', 'Синий'], ['gc', 'Жёлтый'], ['xc', 'Персиковый'], ['tq', 'Бирюзовый'], ['vi', 'Фиолетовый'], ['pk', 'Розовый'], ['gy', 'Серый'], ['or', 'Оранжевый']];
+  var TABS = ['now', 'roles', 'lenta', 'rules', 'setup'];
+  var st = { tab: 'lenta', phase: 'all', ppm: 4, roles: {}, shifts: {}, types: {}, helpers: false, probe: null };
+  var lastFocus = null, suppressClick = false;
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function el(tag, props) {
+    var n = document.createElement(tag);
+    props = props || {};
+    Object.keys(props).forEach(function (k) {
+      var v = props[k];
+      if (v == null || v === false) return;
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = v;
+      else if (k === 'style') n.style.cssText = v;
+      else if (k.indexOf('on') === 0) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      kids.forEach(function (c) { if (c == null || c === false) return; n.append(c.nodeType ? c : document.createTextNode(c)); });
+    }
+    return n;
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(m) { return pad(Math.floor(m / 60)) + ':' + pad(m % 60); }
+  function nowMin() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+  function labelW() { return window.matchMedia('(max-width:640px)').matches ? 104 : 172; }
+  function keys(o) { return Object.keys(o); }
+  function roleCls(l) { return 'rc-' + l.cls; }
+  function dur(t) { return t.e - t.s; }
+  function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
+  function phaseFor(s) { return s < 480 ? 'open' : (s >= 1260 ? 'close' : 'service'); }
+  function reindex() {
+    byId = {}; laneById = {}; typeById = {};
+    D.tasks.forEach(function (t) { byId[t.id] = t; });
+    D.lanes.forEach(function (l) { laneById[l.id] = l; });
+    D.types.forEach(function (t) { typeById[t.id] = t; });
+  }
+  function applyMeta() { $('#h1').textContent = D.meta.title || ''; $('#sub').textContent = D.meta.sub || ''; document.title = D.meta.title || 'Таймлайн смены кухни'; }
+
+  /* ---------- вкладки ---------- */
+  function setTab(name) {
+    st.tab = name;
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
+    TABS.forEach(function (n) { var p = $('#p-' + n); if (p) p.hidden = n !== name; });
+    rerender();
+  }
+  function rerender() {
+    if (!D) return;
+    if (st.tab === 'now') renderNow();
+    else if (st.tab === 'roles') renderRoles();
+    else if (st.tab === 'rules') renderRules();
+    else if (st.tab === 'lenta') renderTimeline();
+    else if (st.tab === 'setup' && ED) ED.renderSetup();
+  }
+  document.querySelectorAll('#tabs button').forEach(function (b) { b.addEventListener('click', function () { setTab(b.dataset.tab); }); });
+
+  /* ---------- фильтры ---------- */
+  function chip(label, set, key, cls, extraDot) {
+    var b = el('button', { class: 'chip ' + (cls || ''), 'aria-pressed': set[key] ? 'true' : 'false', type: 'button' }, extraDot || null, label);
+    b.addEventListener('click', function () {
+      if (set[key]) delete set[key]; else set[key] = true;
+      b.setAttribute('aria-pressed', set[key] ? 'true' : 'false');
+      renderTimeline();
+    });
+    return b;
+  }
+  function buildFilters() {
+    var roles = uniq(D.lanes.map(function (l) { return l.role; }));
+    var shifts = uniq(D.lanes.map(function (l) { return l.shift; }));
+    keys(st.roles).forEach(function (k) { if (roles.indexOf(k) < 0) delete st.roles[k]; });
+    keys(st.shifts).forEach(function (k) { if (shifts.indexOf(k) < 0) delete st.shifts[k]; });
+    $('#f-roles').replaceChildren(); $('#f-shifts').replaceChildren(); $('#f-types').replaceChildren();
+    roles.forEach(function (r) { $('#f-roles').append(chip(r, st.roles, r)); });
+    shifts.forEach(function (s) { $('#f-shifts').append(chip(s ? s[0].toUpperCase() + s.slice(1) : '—', st.shifts, s)); });
+    D.types.forEach(function (t) { $('#f-types').append(chip(t.name, st.types, t.id, 'ty-' + t.id, el('span', { class: 'dot' }))); });
+    $('#f-types').append(chip('Перекрёстная работа', st.types, 'cross', '', el('span', { class: 'dot cross' })));
+  }
+
+  document.querySelectorAll('#phase button').forEach(function (b) {
+    b.addEventListener('click', function () { setPhase(b.dataset.p); });
+  });
+  function setPhase(p) {
+    st.phase = p;
+    document.querySelectorAll('#phase button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.p === p ? 'true' : 'false'); });
+    var sc = $('#tlscroll'), w = PHW[p];
+    if (p === 'open' || p === 'close') {
+      var avail = sc.clientWidth - labelW() - 24;
+      st.ppm = Math.max(3, Math.min(14, Math.floor(avail / (w[1] - w[0]))));
+    } else { st.ppm = 4; }
+    renderTimeline();
+    scrollToMin(w[0], 'start');
+  }
+  $('#zm').addEventListener('click', function () { zoom(-1); });
+  $('#zp').addEventListener('click', function () { zoom(1); });
+  function zoom(d) {
+    var sc = $('#tlscroll'), lw = labelW();
+    var np = Math.max(3, Math.min(16, st.ppm + d));
+    if (np === st.ppm) return;
+    var center = T0 + (sc.scrollLeft + (sc.clientWidth - lw) / 2) / st.ppm;
+    st.ppm = np;
+    renderTimeline();
+    scrollToMin(center, 'center');
+  }
+  $('#helpers').addEventListener('click', function () {
+    st.helpers = !st.helpers;
+    this.setAttribute('aria-pressed', st.helpers ? 'true' : 'false');
+    $('#helpnote').hidden = !st.helpers;
+    renderTimeline();
+  });
+  $('#tonow').addEventListener('click', function () {
+    var n = nowMin();
+    if (n < T0 || n > T1) { scrollToMin(T0, 'start'); return; }
+    scrollToMin(n, 'center');
+  });
+  function scrollToMin(m, how) {
+    var sc = $('#tlscroll'), lw = labelW();
+    var left = (m - T0) * st.ppm;
+    if (how === 'center') left -= (sc.clientWidth - lw) / 2; else left -= 6;
+    sc.scrollTo({ left: Math.max(0, left), behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  /* ---------- лента ---------- */
+  function lanesVisible() {
+    return D.lanes.filter(function (l) {
+      return (!keys(st.roles).length || st.roles[l.role]) && (!keys(st.shifts).length || st.shifts[l.shift]);
+    });
+  }
+  function taskFlags(t) {
+    var dim = false, hi = false;
+    if (st.phase !== 'all' && t.phase !== st.phase) dim = true;
+    if (keys(st.types).length) {
+      if (st.types[t.type] || (st.types.cross && t.cross)) hi = true; else dim = true;
+    }
+    if (st.helpers) { if (t.cross) hi = true; else dim = true; }
+    return { dim: dim, hi: hi && !dim };
+  }
+  function renderTimeline() {
+    if (!D || st.tab !== 'lenta') return;
+    var sc = $('#tlscroll'), inner = $('#tlinner'), root = $('#tl');
+    var sl = sc.scrollLeft, stp = sc.scrollTop;
+    var ppm = st.ppm, lw = labelW(), W = (T1 - T0) * ppm;
+    root.style.setProperty('--ppm', ppm);
+    root.style.setProperty('--lw', lw + 'px');
+    $('#zl').textContent = ppm + ' px/мин';
+    inner.style.width = (lw + W) + 'px';
+
+    var ax = el('div', { class: 'tl-axtrack', style: 'width:' + W + 'px', title: 'Нажмите, чтобы увидеть, кто чем занят' });
+    var step = ppm >= 12 ? 10 : (ppm >= 6 ? 30 : 60);
+    for (var m = Math.ceil(T0 / step) * step; m <= T1; m += step) {
+      ax.append(el('div', { class: 'tick' + (m % 60 === 0 ? ' major' : ''), style: 'left:' + ((m - T0) * ppm) + 'px' }, el('span', { text: fmt(m) })));
+    }
+    ax.addEventListener('click', function (e) {
+      var r = ax.getBoundingClientRect();
+      var mm = T0 + Math.round((e.clientX - r.left) / ppm / 5) * 5;
+      st.probe = Math.max(T0, Math.min(T1, mm));
+      renderTimeline();
+    });
+    var ms = el('div', { class: 'tl-mstrack', style: 'width:' + W + 'px' });
+    D.milestones.forEach(function (x) { ms.append(el('div', { class: 'flag', style: 'left:' + ((x.t - T0) * ppm) + 'px' }, el('span', { text: x.label }))); });
+    var head = el('div', { class: 'tl-head' },
+      el('div', { class: 'tl-row' }, el('div', { class: 'tl-corner', text: 'Время' }), ax),
+      el('div', { class: 'tl-row' }, el('div', { class: 'tl-corner' }), ms));
+
+    var lanesEl = el('div', { class: 'tl-lanes' });
+    lanesVisible().forEach(function (l) {
+      var tr = el('div', { class: 'tl-track', 'data-lane': l.id, style: 'width:' + W + 'px' });
+      tr.append(el('div', { class: 'off', style: 'left:0;width:' + ((l.frm - T0) * ppm) + 'px' }));
+      tr.append(el('div', { class: 'off', style: 'left:' + ((l.to - T0) * ppm) + 'px;width:' + ((T1 - l.to) * ppm) + 'px' }));
+      D.tasks.filter(function (t) { return t.lane === l.id; }).forEach(function (t) {
+        var w = Math.max(6, (t.e - t.s) * ppm - 3);
+        var fl = taskFlags(t);
+        var cls = 'blk ty-' + t.type + (t.cross ? ' cross' : '') + (fl.dim ? ' dim' : '') + (fl.hi ? ' hi' : '') + (w < 44 ? ' tiny' : '');
+        var kids = [];
+        if (w >= 44) kids.push(el('span', { class: 'bt', text: t.title }));
+        if (w >= 96) kids.push(el('span', { class: 'bm', text: fmt(t.s) + '–' + fmt(t.e) }));
+        if (st.helpers && t.cross && w >= 96) kids.push(el('span', { class: 'bh', text: '⇄ ' + (t.crossNote || '') }));
+        tr.append(el('button', { type: 'button', class: cls, 'data-id': t.id, style: 'left:' + ((t.s - T0) * ppm) + 'px;width:' + w + 'px',
+          title: t.title + ' · ' + fmt(t.s) + '–' + fmt(t.e) }, kids));
+      });
+      lanesEl.append(el('div', { class: 'tl-lane' },
+        el('div', { class: 'tl-label ' + roleCls(l) }, el('div', { class: 'rl-role', text: l.role }), el('div', { class: 'rl-sub', text: l.shift + ' · ' + fmt(l.frm) + '–' + fmt(l.to) })),
+        tr));
+    });
+    var over = el('div', { class: 'tl-over', style: 'left:' + lw + 'px;width:' + W + 'px' });
+    D.milestones.forEach(function (x) { over.append(el('div', { class: 'mline', style: 'left:' + ((x.t - T0) * ppm) + 'px' })); });
+    var n = nowMin();
+    if (n >= T0 && n <= T1) over.append(el('div', { class: 'nowline', style: 'left:' + ((n - T0) * ppm) + 'px' }, el('span', { text: 'сейчас ' + fmt(n) })));
+    if (st.probe != null) over.append(el('div', { class: 'pline', style: 'left:' + ((st.probe - T0) * ppm) + 'px' }, el('span', { text: fmt(st.probe) })));
+    lanesEl.append(over);
+
+    inner.replaceChildren(head, lanesEl);
+    sc.scrollLeft = sl; sc.scrollTop = stp;
+    renderProbe();
+  }
+  function renderProbe() {
+    var box = $('#probe');
+    box.replaceChildren();
+    if (st.probe == null) { box.append(el('span', { class: 'muted', text: 'Нажмите на шкалу времени, чтобы увидеть, кто чем занят в эту минуту.' })); return; }
+    box.append(el('b', { text: 'В ' + fmt(st.probe) }));
+    lanesVisible().forEach(function (l) {
+      var t = D.tasks.filter(function (x) { return x.lane === l.id && x.s <= st.probe && st.probe < x.e; })[0];
+      var inShift = st.probe >= l.frm && st.probe < l.to;
+      var pill = el('span', { class: 'rolepill ' + roleCls(l), text: l.role + ' · ' + l.shift });
+      var what;
+      if (t) { what = el('button', { class: 'chip ty-' + t.type, type: 'button', 'data-id': t.id }, el('span', { class: 'dot' }), t.title); what.addEventListener('click', function () { openTask(t.id, what); }); }
+      else what = el('span', { class: 'muted', text: inShift ? 'между задачами' : 'вне смены' });
+      box.append(el('span', { class: 'pr' }, pill, what));
+    });
+  }
+
+  /* клик по задаче и перетаскивание ленты */
+  var scEl = $('#tlscroll');
+  scEl.addEventListener('click', function (e) {
+    if (suppressClick) { suppressClick = false; return; }
+    var b = e.target.closest('.blk');
+    if (b) openTask(b.dataset.id, b);
+  });
+  (function drag() {
+    var down = null;
+    scEl.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'touch' || e.button !== 0) return;
+      down = { x: e.clientX, y: e.clientY, sl: scEl.scrollLeft, st: scEl.scrollTop, moved: false };
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      var dx = e.clientX - down.x, dy = e.clientY - down.y;
+      if (!down.moved && Math.abs(dx) + Math.abs(dy) > 5) { down.moved = true; scEl.classList.add('drag'); }
+      if (down.moved) { scEl.scrollLeft = down.sl - dx; scEl.scrollTop = down.st - dy; }
+    });
+    window.addEventListener('pointerup', function () {
+      if (down && down.moved) { suppressClick = true; setTimeout(function () { suppressClick = false; }, 0); }
+      scEl.classList.remove('drag'); down = null;
+    });
+  })();
+
+  /* ---------- описание задачи ---------- */
+  function openTask(id, from) {
+    if (ED && ED.on()) { ED.openTask(id, from); return; }
+    var t = byId[id], l = laneById[t.lane];
+    lastFocus = from || document.activeElement;
+    $('#dr-title').textContent = t.title;
+    var b = $('#dr-b'); b.replaceChildren();
+    b.append(el('span', { class: 'badge ty-' + t.type }, el('span', { class: 'dot' }), typeById[t.type].name));
+    b.append(el('dl', { class: 'dr-meta' },
+      el('dt', { text: 'Кто' }), el('dd', { text: l.role + ' · ' + l.shift }),
+      el('dt', { text: 'Время' }), el('dd', { text: fmt(t.s) + '–' + fmt(t.e) + ' · ' + dur(t) + ' мин' }),
+      el('dt', { text: 'Часть дня' }), el('dd', { text: PH[t.phase] })));
+    if (t.cross && t.crossNote) b.append(el('div', { class: 'note', text: '⇄ ' + t.crossNote }));
+    if (t.guess) b.append(el('div', { class: 'note', text: 'Черновик: время и содержание этой задачи нужно подтвердить под вашу кухню.' }));
+    if (t.desc) b.append(el('div', { class: 'dr-desc', text: t.desc }));
+    $('#scrim').hidden = false; $('#drawer').hidden = false;
+    $('#dr-x').focus();
+  }
+  function closeTask() {
+    $('#scrim').hidden = true; $('#drawer').hidden = true;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  $('#dr-x').addEventListener('click', closeTask);
+  $('#scrim').addEventListener('click', closeTask);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#drawer').hidden) closeTask(); });
+
+  /* ---------- Сейчас ---------- */
+  function renderNow() {
+    var p = $('#p-now'); p.replaceChildren();
+    var n = nowMin();
+    p.append(el('div', { class: 'now-head' }, el('span', { class: 'now-time', text: fmt(n) }),
+      el('span', { class: 'muted', text: (n >= 420 && n < 1320) ? 'Кухня работает' : 'Кухня закрыта. Открытие в 07:00' })));
+    var cards = el('div', { class: 'cards' });
+    D.lanes.forEach(function (l) {
+      var list = D.tasks.filter(function (t) { return t.lane === l.id; }).sort(function (a, b) { return a.s - b.s; });
+      var head = el('div', { class: 'card-h' }, el('span', { class: 'rolepill ' + roleCls(l), text: l.role }), el('span', { class: 'shifttag', text: l.shift + ' · ' + fmt(l.frm) + '–' + fmt(l.to) }));
+      var body = [];
+      if (n < l.frm) body.push(el('div', { class: 'next', text: 'Смена начнётся в ' + fmt(l.frm) + ', через ' + (l.frm - n) + ' мин.' }));
+      else if (n >= l.to) body.push(el('div', { class: 'next', text: 'Смена закончилась в ' + fmt(l.to) + '.' }));
+      else {
+        var cur = list.filter(function (t) { return t.s <= n && n < t.e; })[0];
+        var nxt = list.filter(function (t) { return t.s > n; })[0];
+        if (cur) {
+          var b = el('button', { type: 'button', class: 'cur ty-' + cur.type, 'data-id': cur.id },
+            el('span', { class: 'ct', text: cur.title }),
+            el('span', { class: 'cm', text: fmt(cur.s) + '–' + fmt(cur.e) + ' · осталось ' + (cur.e - n) + ' мин' }),
+            el('span', { class: 'prog' }, el('i', { style: 'width:' + Math.round((n - cur.s) / dur(cur) * 100) + '%' })));
+          b.addEventListener('click', function () { openTask(cur.id, b); });
+          body.push(b);
+        } else body.push(el('div', { class: 'next', text: 'Между задачами.' }));
+        if (nxt) {
+          var nb = el('button', { type: 'button', class: 'next-btn', text: 'Дальше: ' + nxt.title + ' · в ' + fmt(nxt.s) + ' (через ' + (nxt.s - n) + ' мин)' });
+          nb.addEventListener('click', function () { openTask(nxt.id, nb); });
+          body.push(nb);
+        }
+      }
+      cards.append(el('div', { class: 'card' }, head, body));
+    });
+    p.append(cards);
+  }
+
+  /* ---------- По ролям ---------- */
+  function renderRoles() {
+    var p = $('#p-roles'); p.replaceChildren();
+    D.lanes.forEach(function (l) {
+      var sec = el('div', { class: 'lane-sec' }, el('div', { class: 'card-h' },
+        el('span', { class: 'rolepill ' + roleCls(l), text: l.role }), el('span', { class: 'shifttag', text: l.shift + ' · ' + fmt(l.frm) + '–' + fmt(l.to) })));
+      D.tasks.filter(function (t) { return t.lane === l.id; }).sort(function (a, b) { return a.s - b.s; }).forEach(function (t) {
+        var r = el('button', { type: 'button', class: 'trow ty-' + t.type },
+          el('span', { class: 'tt', text: fmt(t.s) + '–' + fmt(t.e) }),
+          el('span', { class: 'tn' }, el('span', { class: 'dot' }), el('span', { class: 'tx', text: t.title })));
+        r.addEventListener('click', function () { openTask(t.id, r); });
+        sec.append(r);
+      });
+      p.append(sec);
+    });
+  }
+
+  /* ---------- Правила ---------- */
+  function renderRules() {
+    var p = $('#p-rules'); p.replaceChildren();
+    if (ED && ED.on()) { ED.renderRules(); return; }
+    var grid = el('div', { class: 'rules' });
+    D.rules.forEach(function (r) {
+      var c = el('div', { class: 'card' }, el('h3', { text: r.title }));
+      if (r.note && r.groups.length > 0 && !r.noteEnd) c.append(el('p', { text: r.note }));
+      r.groups.forEach(function (g) {
+        if (g.h) c.append(el('h4', { text: g.h }));
+        c.append(el('ul', {}, g.items.map(function (i) { return el('li', { text: i }); })));
+      });
+      if (r.note && (r.noteEnd || r.groups.length === 0)) c.append(el('p', { text: r.note }));
+      grid.append(c);
+    });
+    var lg = el('div', { class: 'card' }, el('h3', { text: 'Цвета видов работы' }),
+      el('div', { class: 'frow' }, D.types.map(function (t) { return el('span', { class: 'chip ty-' + t.id }, el('span', { class: 'dot' }), t.name); })));
+    grid.append(lg);
+    p.append(grid);
+  }
+
+  
+  /* ======================= РЕДАКТОР ======================= */
+  ED = (function () {
+    var dirty = false, publishing = false, canEdit = false, preview = false, draftT = null, gh = null;
+    var DRAFT_KEY = 'kitchen-draft:' + location.pathname, CFG_KEY = 'kitchen-gh', API = 'https://api.github.com';
+
+    function sv(s, text) { var n = $('#sv'); n.dataset.s = s; n.textContent = text; }
+    function setDirty(v) { dirty = v; $('#pubbtn').disabled = !v || publishing; sv(v ? 'dirty' : 'idle', v ? 'Не опубликовано' : 'Изменений нет'); }
+    function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+    function touch() {
+      setDirty(true);
+      clearTimeout(draftT);
+      draftT = setTimeout(function () { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ base: D.rev, at: Date.now(), data: D })); } catch (e) {} }, 800);
+    }
+
+    /* ---- GitHub: файл data.json читается и записывается через Contents API ---- */
+    function utf8b64(s) {
+      var u = new TextEncoder().encode(s), bin = '', i;
+      for (i = 0; i < u.length; i += 8192) bin += String.fromCharCode.apply(null, u.subarray(i, i + 8192));
+      return btoa(bin);
+    }
+    function b64utf8(s) {
+      var bin = atob(s.replace(/\s/g, '')), u = new Uint8Array(bin.length), i;
+      for (i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      return new TextDecoder().decode(u);
+    }
+    function ghFetch(path, o) {
+      o = o || {};
+      var h = { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + gh.token };
+      if (o.body) h['Content-Type'] = 'application/json';
+      return fetch(API + path, { method: o.method || 'GET', headers: h, body: o.body ? JSON.stringify(o.body) : undefined });
+    }
+    function ghErr(r) {
+      var e = new Error(r.status === 401 ? 'Ключ не подошёл: проверьте, что он скопирован целиком и не просрочен.'
+        : r.status === 403 ? 'У ключа нет права записи. Нужно разрешение Contents: Read and write на этот репозиторий.'
+        : r.status === 404 ? 'Не найден репозиторий или файл data.json. Проверьте имя репозитория и что ключ выдан именно на него.'
+        : 'GitHub ответил ошибкой ' + r.status + '.');
+      e.status = r.status;
+      return e;
+    }
+    function ghLoad() {
+      return ghFetch('/repos/' + gh.repo + '/contents/data.json?ref=' + encodeURIComponent(gh.branch) + '&_=' + Date.now()).then(function (r) {
+        if (!r.ok) throw ghErr(r);
+        return r.json();
+      }).then(function (j) { return { sha: j.sha, data: JSON.parse(b64utf8(j.content)) }; });
+    }
+    function ghLogin(repo, token) {
+      gh = { mode: 'gh', repo: repo, token: token, branch: 'main' };
+      return ghFetch('/repos/' + repo + '?_=' + Date.now()).then(function (r) {
+        if (!r.ok) throw ghErr(r);
+        return r.json();
+      }).then(function (j) { gh.branch = j.default_branch || 'main'; return ghLoad(); }).then(function () { return gh; });
+    }
+    function download(nd) {
+      var url = URL.createObjectURL(new Blob([JSON.stringify(nd, null, 1) + '\n'], { type: 'application/json' }));
+      var a = el('a', { href: url, download: 'data.json' });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    }
+
+    function done(nd, text) {
+      D.rev = nd.rev; clearDraft(); publishing = false; setDirty(false); sv('ok', text);
+      setLive('Режим редактора. Опубликованная версия: ' + D.rev + '.');
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(D)); } catch (e) {}
+    }
+    function publish() {
+      if (publishing || !dirty) return;
+      publishing = true; $('#pubbtn').disabled = true; sv('busy', 'Публикую…');
+      var nd = JSON.parse(JSON.stringify(D)); nd.rev = (D.rev || 0) + 1;
+      function fail(msg) { publishing = false; $('#pubbtn').disabled = !dirty; sv('err', msg); }
+      if (!gh) { download(nd); done(nd, 'Файл data.json скачан. Замените им старый файл на хостинге.'); return; }
+      ghLoad().then(function (cur) {
+        if ((cur.data.rev || 0) !== (D.rev || 0)) { var c = new Error('conflict'); c.conflict = cur; throw c; }
+        return ghFetch('/repos/' + gh.repo + '/contents/data.json', { method: 'PUT', body: {
+          message: 'Расписание: версия ' + nd.rev, content: utf8b64(JSON.stringify(nd, null, 1) + '\n'), sha: cur.sha, branch: gh.branch } });
+      }).then(function (r) {
+        if (!r.ok) throw ghErr(r);
+        done(nd, 'Опубликовано (версия ' + nd.rev + '). У сотрудников появится в течение 5–7 минут.');
+      }).catch(function (e) {
+        if (e.conflict) { fail('Расписание уже изменили с другого устройства (версия ' + e.conflict.data.rev + ').'); showConflict(e.conflict); }
+        else if (e instanceof TypeError) fail('Нет связи с GitHub. Повторите, когда появится интернет.');
+        else if (e.status === 409) fail('Файл изменился во время сохранения. Нажмите «Опубликовать» ещё раз.');
+        else fail(e.message || 'Не удалось опубликовать, повторите.');
+      });
+    }
+    function showConflict(cur) {
+      var old = $('#conflict'); if (old) old.remove();
+      var bar = el('div', { class: 'note warn', id: 'conflict' }, 'На сервере версия ' + cur.data.rev + ', у вас правки к версии ' + D.rev + '. ',
+        el('button', { type: 'button', class: 'btn xs', text: 'Загрузить актуальную (мои правки пропадут)', onclick: function () {
+          D = cur.data; clearDraft(); reindex(); applyMeta(); buildFilters(); rerender(); setDirty(false); bar.remove();
+        } }), ' ',
+        el('button', { type: 'button', class: 'btn xs', text: 'Опубликовать мою версию поверх', onclick: function () { D.rev = cur.data.rev; bar.remove(); publish(); } }));
+      $('#edbar').after(bar);
+    }
+
+    /* ---- вход руководителя ---- */
+    function enable(cfg) {
+      gh = cfg.mode === 'gh' ? cfg : null;
+      canEdit = true; stopPoll();
+      $('#edbar').hidden = false; $('#loginbtn').hidden = true;
+      document.querySelectorAll('.edonly').forEach(function (n) { n.hidden = false; });
+      $('#modelab').textContent = gh ? 'GitHub: ' + gh.repo : 'без GitHub: правки скачиваются файлом';
+      setLive('Режим редактора. Опубликованная версия: ' + D.rev + '.');
+      checkDraft(); rerender();
+    }
+    function logout() {
+      if (dirty && !window.confirm('Есть неопубликованные правки. Они останутся на этом устройстве как черновик. Выйти?')) return;
+      try { localStorage.removeItem(CFG_KEY); } catch (e) {}
+      location.reload();
+    }
+    function detect() {
+      var cfg = null;
+      try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch (e) {}
+      if (cfg && (cfg.mode === 'file' || (cfg.mode === 'gh' && cfg.repo && cfg.token))) enable(cfg);
+    }
+    function guessRepo() {
+      var m = /^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname);
+      if (!m) return '';
+      var seg = location.pathname.split('/')[1];
+      return m[1] + '/' + (seg && !/\.html?$/i.test(seg) ? seg : m[1] + '.github.io');
+    }
+    function openLogin() {
+      lastFocus = document.activeElement;
+      $('#dr-title').textContent = 'Вход для руководителя';
+      var b = $('#dr-b'); b.replaceChildren();
+      var repoI = inp(guessRepo(), function () {}); repoI.placeholder = 'логин/репозиторий';
+      var tokI = el('input', { type: 'password', autocomplete: 'off', placeholder: 'github_pat_…' });
+      var err = el('div', { class: 'note bad', hidden: true });
+      var go = el('button', { type: 'button', class: 'btn accent', text: 'Войти' });
+      go.addEventListener('click', function () {
+        var repo = repoI.value.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, ''), tok = tokI.value.trim();
+        if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !tok) { err.textContent = 'Укажите репозиторий в виде логин/репозиторий и вставьте ключ.'; err.hidden = false; return; }
+        go.disabled = true; go.textContent = 'Проверяю…'; err.hidden = true;
+        ghLogin(repo, tok).then(function (cfg) {
+          try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+          closeTask(); enable(cfg);
+        }).catch(function (e) {
+          gh = null; go.disabled = false; go.textContent = 'Войти';
+          err.textContent = e instanceof TypeError ? 'Нет связи с GitHub.' : (e.message || 'Не удалось войти.'); err.hidden = false;
+        });
+      });
+      var fileBtn = el('button', { type: 'button', class: 'btn', text: 'Править без GitHub', onclick: function () {
+        var cfg = { mode: 'file' };
+        try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+        closeTask(); enable(cfg);
+      } });
+      b.append(el('div', { class: 'login' },
+        el('p', { text: 'Правки сохраняются в вашем репозитории GitHub, в файле data.json. Ключ хранится только на этом устройстве, сотрудникам он не виден.' }),
+        fld('Репозиторий', repoI), fld('Ключ доступа (токен)', tokI), err,
+        el('div', { class: 'acts' }, go),
+        el('div', { class: 'grp' },
+          el('p', { text: 'Нет GitHub? Можно править и без него: приложение скачает готовый data.json, а вы замените им старый файл там, где лежит сайт.' }),
+          el('div', { class: 'acts' }, fileBtn))));
+      $('#scrim').hidden = false; $('#drawer').hidden = false;
+      repoI.value ? tokI.focus() : repoI.focus();
+    }
+    function checkDraft() {
+      var dr = null;
+      try { var raw = localStorage.getItem(DRAFT_KEY); dr = raw && JSON.parse(raw); } catch (e) {}
+      if (!dr) return;
+      if (dr.base !== D.rev || !dr.data) { clearDraft(); return; }
+      var d = new Date(dr.at), bar;
+      bar = el('div', { class: 'note warn', id: 'draftbar' }, 'Найдены неопубликованные правки от ' + fmt(d.getHours() * 60 + d.getMinutes()) + '. ',
+        el('button', { type: 'button', class: 'btn xs', text: 'Восстановить', onclick: function () { D = dr.data; reindex(); applyMeta(); buildFilters(); rerender(); setDirty(true); bar.remove(); } }), ' ',
+        el('button', { type: 'button', class: 'btn xs', text: 'Отбросить', onclick: function () { clearDraft(); bar.remove(); } }));
+      $('#edbar').after(bar);
+    }
+    function uid() { return 'n' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); }
+    function parseT(s) { var m = /^(\d\d):(\d\d)$/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+
+    /* маленькие конструкторы полей */
+    function fld(label, ctl) { return el('label', { class: 'fld' }, el('span', { class: 'fl', text: label }), ctl); }
+    function inp(val, on) { var i = el('input', { type: 'text', autocomplete: 'off' }); i.value = val == null ? '' : val; i.addEventListener('input', function () { on(i.value); }); return i; }
+    function ta(val, rows, on) { var t = el('textarea', { rows: rows }); t.value = val == null ? '' : val; t.addEventListener('input', function () { on(t.value); }); return t; }
+    function cb(val, on) { var c = el('input', { type: 'checkbox' }); c.checked = !!val; c.addEventListener('change', function () { on(c.checked); }); return c; }
+    function sel(opts, val, on) {
+      var s = el('select');
+      opts.forEach(function (o) { s.append(el('option', { value: o[0], text: o[1] })); });
+      s.value = val; s.addEventListener('change', function () { on(s.value); });
+      return s;
+    }
+    function timeInp(val) { var i = el('input', { type: 'time', step: 300 }); i.value = fmt(val); return i; }
+    function twoStep(label, sure, fn, cls) {
+      var armed = false, tmr, b = el('button', { type: 'button', class: 'btn danger ' + (cls || ''), text: label });
+      b.addEventListener('click', function () {
+        if (!armed) { armed = true; b.textContent = sure; b.classList.add('armed'); tmr = setTimeout(function () { armed = false; b.textContent = label; b.classList.remove('armed'); }, 3500); return; }
+        clearTimeout(tmr); fn();
+      });
+      return b;
+    }
+
+    /* ---- форма задачи ---- */
+    function openTask(id, from) {
+      var t = byId[id]; if (!t) return;
+      lastFocus = from || document.activeElement;
+      var b = $('#dr-b'); b.replaceChildren();
+      var warn = el('div', { class: 'note warn', hidden: true });
+      var terr = el('div', { class: 'note bad', hidden: true });
+      var durEl = el('span', { class: 'muted' });
+      function refresh() {
+        $('#dr-title').textContent = t.title || 'Задача';
+        var ov = D.tasks.filter(function (x) { return x !== t && x.lane === t.lane && x.s < t.e && t.s < x.e; });
+        warn.hidden = !ov.length;
+        warn.textContent = ov.length ? 'Пересекается с: ' + ov.map(function (x) { return '«' + x.title + '» ' + fmt(x.s) + '–' + fmt(x.e); }).join(', ') : '';
+        durEl.textContent = 'Длительность: ' + (t.e - t.s) + ' мин';
+      }
+      function changed() { t.phase = phaseFor(t.s); touch(); refresh(); rerender(); }
+
+      var title = inp(t.title, function (v) { t.title = v; changed(); });
+      var lane = sel(D.lanes.map(function (l) { return [l.id, l.role + ' · ' + l.shift]; }), t.lane, function (v) { t.lane = v; changed(); });
+      var type = sel(D.types.map(function (x) { return [x.id, x.name]; }), t.type, function (v) { t.type = v; changed(); });
+      var sI = timeInp(t.s), eI = timeInp(t.e);
+      function applyTimes() {
+        var s = parseT(sI.value), e = parseT(eI.value);
+        if (s == null || e == null || s < T0 || e > T1 || e <= s) { terr.textContent = 'Время должно быть от 06:30 до 22:30, конец позже начала.'; terr.hidden = false; return; }
+        terr.hidden = true; t.s = s; t.e = e; changed();
+      }
+      sI.addEventListener('change', applyTimes); eI.addEventListener('change', applyTimes);
+      function shift(d) {
+        d = Math.max(T0 - t.s, Math.min(T1 - t.e, d)); if (!d) return;
+        t.s += d; t.e += d; sI.value = fmt(t.s); eI.value = fmt(t.e); terr.hidden = true; changed();
+      }
+      function resize(d) {
+        var e = Math.min(T1, t.e + d); if (e <= t.s + 4) return;
+        t.e = e; eI.value = fmt(t.e); terr.hidden = true; changed();
+      }
+      function nudge(label, list, fn) {
+        return el('div', { class: 'nudge' }, el('span', { class: 'nl', text: label }), list.map(function (d) {
+          return el('button', { type: 'button', text: (d > 0 ? '+' : '−') + Math.abs(d), onclick: function () { fn(d); } });
+        }));
+      }
+      var crossNote = inp(t.crossNote, function (v) { t.crossNote = v; changed(); });
+      var crossWrap = fld('Кто кому помогает (пояснение)', crossNote); crossWrap.hidden = !t.cross;
+      var cross = cb(t.cross, function (v) { t.cross = v; crossWrap.hidden = !v; changed(); });
+      var guess = cb(t.guess, function (v) { t.guess = v; changed(); });
+      var desc = ta(t.desc, 9, function (v) { t.desc = v; touch(); });
+
+      var del = twoStep('Удалить', 'Точно удалить?', function () {
+        D.tasks = D.tasks.filter(function (x) { return x !== t; }); reindex(); touch(); closeTask(); rerender();
+      });
+      var dup = el('button', { type: 'button', class: 'btn', text: 'Дублировать', onclick: function () {
+        var n = JSON.parse(JSON.stringify(t)), d = t.e - t.s;
+        n.id = uid(); n.s = Math.min(t.e, T1 - d); n.e = n.s + d; n.phase = phaseFor(n.s);
+        D.tasks.push(n); reindex(); touch(); rerender(); openTask(n.id, lastFocus);
+      } });
+      var done = el('button', { type: 'button', class: 'btn accent', text: 'Готово', onclick: closeTask });
+
+      b.append(fld('Название', title), fld('Кто делает', lane),
+        el('div', { class: 'r2' }, fld('Начало', sI), fld('Конец', eI)), terr,
+        nudge('Сдвинуть', [-30, -10, 10, 30], shift), nudge('Длина', [-10, 10, 30], resize), durEl, warn,
+        fld('Вид работы', type),
+        el('label', { class: 'chk' }, cross, 'Перекрёстная работа (помогает другому или заменяет его)'), crossWrap,
+        el('label', { class: 'chk' }, guess, 'Черновик: время или содержание нужно подтвердить'),
+        fld('Описание (что делать по шагам)', desc),
+        el('div', { class: 'acts' }, done, dup, del));
+      refresh();
+      $('#scrim').hidden = false; $('#drawer').hidden = false;
+      $('#dr-x').focus();
+    }
+    function addTask(laneId, s) {
+      var vis = lanesVisible();
+      laneId = laneId || (vis[0] || D.lanes[0] || {}).id;
+      if (!laneId) return;
+      s = s != null ? s : (st.probe != null ? st.probe : 720);
+      s = Math.max(T0, Math.min(T1 - 30, Math.round(s / 5) * 5));
+      var t = { id: uid(), lane: laneId, type: 'prep', phase: phaseFor(s), title: 'Новая задача', s: s, e: s + 30, desc: '', guess: false, cross: false, crossNote: '' };
+      D.tasks.push(t); reindex(); touch(); rerender();
+      openTask(t.id, document.activeElement);
+      var ti = $('#dr-b input[type="text"]'); if (ti) { ti.focus(); ti.select(); }
+    }
+
+    /* ---- вкладка «Настройка» ---- */
+    function afterLane() { reindex(); buildFilters(); touch(); }
+    function renderSetup() {
+      var p = $('#p-setup'); p.replaceChildren();
+      p.append(el('div', { class: 'card' }, el('h3', { text: 'Заголовок страницы' }),
+        fld('Название', inp(D.meta.title, function (v) { D.meta.title = v; applyMeta(); touch(); })),
+        fld('Подпись под названием', ta(D.meta.sub, 3, function (v) { D.meta.sub = v; applyMeta(); touch(); }))));
+
+      /* ленты */
+      var lc = el('div', { class: 'card lane-ed' }, el('h3', { text: 'Ленты: кто, когда и каким цветом' }),
+        el('p', { class: 'muted', text: 'Одна лента — один сотрудник в одну смену. Один и тот же человек в двух сменах (Хамид) — две ленты с одинаковым именем.' }));
+      var dl = el('datalist', { id: 'shifts-dl' }, el('option', { value: 'утро' }), el('option', { value: 'вечер' }));
+      lc.append(dl);
+      D.lanes.forEach(function (l, i) {
+        var n = D.tasks.filter(function (t) { return t.lane === l.id; }).length;
+        var pill = el('span', { class: 'rolepill ' + roleCls(l), text: l.role || '—' });
+        var fI = timeInp(l.frm), tI = timeInp(l.to);
+        function applyHours() {
+          var a = parseT(fI.value), z = parseT(tI.value);
+          if (a == null || z == null || a < T0 || z > T1 || z <= a) { fI.value = fmt(l.frm); tI.value = fmt(l.to); return; }
+          l.frm = a; l.to = z; touch();
+        }
+        fI.addEventListener('change', applyHours); tI.addEventListener('change', applyHours);
+        var shiftI = inp(l.shift, function (v) { l.shift = v; afterLane(); }); shiftI.setAttribute('list', 'shifts-dl');
+        var sw = el('div', { class: 'swatches' }, PALETTE.map(function (c) {
+          return el('button', { type: 'button', class: 'sw rc-' + c[0], title: c[1], 'aria-label': c[1], 'aria-pressed': l.cls === c[0] ? 'true' : 'false', onclick: function () { l.cls = c[0]; touch(); renderSetup(); } });
+        }));
+        var move = function (d) { var j = i + d; if (j < 0 || j >= D.lanes.length) return; var x = D.lanes[i]; D.lanes[i] = D.lanes[j]; D.lanes[j] = x; touch(); renderSetup(); };
+        var delLane = twoStep('Удалить ленту' + (n ? ' и ' + n + ' задач' : ''), 'Точно удалить?', function () {
+          D.lanes.splice(i, 1); D.tasks = D.tasks.filter(function (t) { return t.lane !== l.id; }); afterLane(); renderSetup();
+        }, 'xs');
+        lc.append(el('div', { class: 'grp' },
+          el('div', { class: 'card-h' }, pill, el('span', { class: 'muted', text: n + ' задач' })),
+          el('div', { class: 'lane-ed-g' },
+            fld('Имя / роль', inp(l.role, function (v) { l.role = v; pill.textContent = v || '—'; afterLane(); })),
+            fld('Смена', shiftI), fld('С', fI), fld('До', tI)),
+          sw,
+          el('div', { class: 'acts' },
+            el('button', { type: 'button', class: 'btn xs', text: '↑ Выше', onclick: function () { move(-1); } }),
+            el('button', { type: 'button', class: 'btn xs', text: '↓ Ниже', onclick: function () { move(1); } }),
+            delLane)));
+      });
+      lc.append(el('div', { class: 'acts' }, el('button', { type: 'button', class: 'btn', text: '＋ Добавить ленту', onclick: function () {
+        var used = D.lanes.map(function (l) { return l.cls; });
+        var free = PALETTE.filter(function (c) { return used.indexOf(c[0]) < 0; })[0] || PALETTE[0];
+        D.lanes.push({ id: 'l' + uid().slice(1), role: 'Новый сотрудник', cls: free[0], shift: 'утро', frm: 480, to: 960 });
+        afterLane(); renderSetup();
+      } })));
+      p.append(lc);
+
+      /* вехи */
+      var mc = el('div', { class: 'card' }, el('h3', { text: 'Вехи на шкале (красные флажки)' }));
+      D.milestones.forEach(function (m, i) {
+        var tI = timeInp(m.t);
+        tI.addEventListener('change', function () { var v = parseT(tI.value); if (v == null || v < T0 || v > T1) { tI.value = fmt(m.t); return; } m.t = v; touch(); });
+        mc.append(el('div', { class: 'ms-row' }, tI, inp(m.label, function (v) { m.label = v; touch(); }),
+          twoStep('Убрать', 'Точно?', function () { D.milestones.splice(i, 1); touch(); renderSetup(); }, 'xs')));
+      });
+      mc.append(el('div', { class: 'acts' }, el('button', { type: 'button', class: 'btn', text: '＋ Добавить веху', onclick: function () {
+        D.milestones.push({ t: 720, label: 'Новая веха' }); D.milestones.sort(function (a, b) { return a.t - b.t; }); touch(); renderSetup();
+      } })));
+      p.append(mc);
+
+      /* виды работ */
+      var tc = el('div', { class: 'card' }, el('h3', { text: 'Названия видов работы' }), el('div', { class: 'tp-grid' }, D.types.map(function (x) {
+        return el('div', { class: 'ty-' + x.id, style: 'display:flex;gap:8px;align-items:center' }, el('span', { class: 'dot' }), inp(x.name, function (v) { x.name = v; touch(); buildFilters(); }));
+      })));
+      p.append(tc);
+    }
+
+    /* ---- правила ---- */
+    function renderRules() {
+      var p = $('#p-rules'); p.replaceChildren();
+      var grid = el('div', { class: 'rules' });
+      D.rules.forEach(function (r, ri) {
+        var c = el('div', { class: 'card' });
+        c.append(fld('Заголовок карточки', inp(r.title, function (v) { r.title = v; touch(); })));
+        c.append(fld('Примечание (необязательно)', ta(r.note || '', 2, function (v) { r.note = v; touch(); })));
+        c.append(el('label', { class: 'chk' }, cb(r.noteEnd, function (v) { r.noteEnd = v; touch(); }), 'Примечание внизу карточки'));
+        r.groups.forEach(function (g, gi) {
+          c.append(el('div', { class: 'grp' },
+            fld('Подзаголовок группы', inp(g.h || '', function (v) { g.h = v; touch(); })),
+            fld('Пункты, каждый с новой строки', ta(g.items.join('\n'), Math.min(10, g.items.length + 1), function (v) {
+              g.items = v.split('\n').map(function (s) { return s.trim(); }).filter(Boolean); touch();
+            })),
+            el('div', { class: 'acts' }, twoStep('Удалить группу', 'Точно?', function () { r.groups.splice(gi, 1); touch(); renderRules(); }, 'xs'))));
+        });
+        c.append(el('div', { class: 'acts' },
+          el('button', { type: 'button', class: 'btn xs', text: '＋ Группа', onclick: function () { r.groups.push({ h: '', items: [] }); touch(); renderRules(); } }),
+          twoStep('Удалить карточку', 'Точно удалить?', function () { D.rules.splice(ri, 1); touch(); renderRules(); }, 'xs')));
+        grid.append(c);
+      });
+      grid.append(el('div', { class: 'card' }, el('button', { type: 'button', class: 'btn', text: '＋ Новая карточка правил', onclick: function () {
+        D.rules.push({ title: 'Новое правило', groups: [{ h: '', items: [] }], noteEnd: false }); touch(); renderRules();
+      } })));
+      p.append(grid);
+    }
+
+    function setPreview(on) {
+      preview = on; document.body.classList.toggle('pv', on);
+      var pb = $('#previewbtn');
+      pb.setAttribute('aria-pressed', on ? 'true' : 'false');
+      pb.textContent = on ? '← Вернуться к правке' : 'Как видят сотрудники';
+      if (!$('#drawer').hidden) closeTask();
+      if (on && st.tab === 'setup') setTab('lenta'); else rerender();
+    }
+    function init() {
+      $('#addtask').addEventListener('click', function () { addTask(); });
+      $('#previewbtn').addEventListener('click', function () { setPreview(!preview); });
+      $('#pubbtn').addEventListener('click', publish);
+      $('#outbtn').addEventListener('click', logout);
+      $('#loginbtn').addEventListener('click', openLogin);
+      scEl.addEventListener('dblclick', function (e) {
+        if (!canEdit || preview) return;
+        var tr = e.target.closest('.tl-track');
+        if (!tr || e.target.closest('.blk')) return;
+        var r = tr.getBoundingClientRect();
+        addTask(tr.dataset.lane, T0 + Math.round((e.clientX - r.left) / st.ppm / 5) * 5);
+      });
+      window.addEventListener('beforeunload', function (e) { if (dirty && !publishing) { e.preventDefault(); e.returnValue = ''; } });
+      setDirty(false);
+      detect();
+    }
+    return { on: function () { return canEdit && !preview; }, canEdit: function () { return canEdit; }, openLogin: openLogin, openTask: openTask, renderSetup: renderSetup, renderRules: renderRules, init: init };
+  })();
+  
+
+  /* ---------- автообновление: раз в 5 минут приложение заново читает data.json ---------- */
+  var pollT = null, pollFails = 0;
+  function setLive(s) { var n = $('#live'); if (n) n.textContent = s; }
+  function stopPoll() { clearInterval(pollT); pollT = null; }
+  function poll() {
+    if (ED && ED.canEdit()) return;
+    fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (nd) {
+      if (!nd || !nd.tasks || !nd.lanes || !nd.types) throw new Error('bad data');
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(nd)); } catch (e) {}
+      pollFails = 0;
+      var upd = (nd.rev || 0) !== (D.rev || 0);
+      if (upd) {
+        if (!$('#drawer').hidden) closeTask();
+        D = nd; reindex(); applyMeta(); buildFilters(); rerender();
+      }
+      setLive('Расписание обновляется само каждые 5 минут. ' + (upd ? 'Обновлено' : 'Проверено') + ' в ' + fmt(nowMin()) + '. Версия ' + D.rev + '.');
+    }).catch(function () {
+      pollFails++;
+      setLive('Нет связи: показано сохранённое расписание (версия ' + D.rev + '). Проверю снова через 5 минут.');
+    });
+  }
+  function startPoll() {
+    if (ED && ED.canEdit()) return;
+    setLive('Проверяю обновления…');
+    pollT = setInterval(poll, POLL);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && pollT) poll(); });
+    window.addEventListener('online', function () { if (pollT) poll(); });
+    poll();
+  }
+
+  /* ---------- старт ---------- */
+  function start() {
+    reindex(); applyMeta(); buildFilters();
+    var ui = null;
+    try { ui = JSON.parse(sessionStorage.getItem('kitchen-ui') || 'null'); sessionStorage.removeItem('kitchen-ui'); } catch (e) {}
+    if (ED) ED.init();
+    setTab(ui && ['now', 'roles', 'lenta', 'rules'].indexOf(ui.tab) >= 0 ? ui.tab : 'lenta');
+    if (ui && (ui.phase === 'open' || ui.phase === 'service' || ui.phase === 'close')) setPhase(ui.phase); else scrollToMin(T0, 'start');
+    startPoll();
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {});
+    setInterval(function () {
+      if (st.tab === 'now') renderNow();
+      if (st.tab === 'lenta') renderTimeline();
+    }, 30000);
+    window.addEventListener('resize', function () { if (st.tab === 'lenta') renderTimeline(); });
+  }
+  start();
+})();
+</script>
+</body>
+</html>
