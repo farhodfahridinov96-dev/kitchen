@@ -298,6 +298,44 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
   .ms-row { grid-template-columns: 96px 1fr auto; }
   
 }
+/* общие списки: заготовки и темы пятиминутки */
+.cnt { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; vertical-align: 1px; }
+.board { display: flex; flex-direction: column; gap: 14px; max-width: 760px; width: 100%; }
+.board h2 { margin: 0; font-size: 20px; line-height: 1.2; }
+.bd-lead { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.bd-who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; color: var(--muted); font-size: 12.5px; }
+.bd-who b { color: var(--fg); font-weight: 600; }
+.bd-login { align-items: flex-start; }
+.bd-login p { margin: 0; color: var(--muted); }
+.bd-login .btn { padding: 10px 18px; }
+.bd-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.bd-form .bd-t { flex: 1 1 260px; min-width: 0; padding: 10px 12px; font-size: 15px; }
+.bd-form .btn { padding: 10px 18px; }
+.bd-msg { margin: -4px 0 0; font-size: 12.5px; color: var(--muted); }
+.bd-msg:empty { display: none; }
+.bd-msg.err { color: var(--accent); font-weight: 600; }
+.bd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bd-item { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 10px 10px 14px; }
+.bd-item .tx { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-weight: 600; font-size: 15px; }
+.bd-item .tt { display: block; }
+.bd-item .mt { display: block; margin-top: 2px; font-weight: 400; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bd-item.done { background: transparent; }
+.bd-item.done .tt { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+.bd-item.pend { opacity: .6; }
+.btn.ok { border-color: var(--ok); color: var(--ok); background: transparent; min-height: 40px; white-space: nowrap; }
+.btn.ok:hover { background: var(--ok); color: var(--bg); }
+.bd-item .go { flex: none; }
+.bd-item .x { flex: none; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+.bd-item .x:hover { background: var(--surface-2); color: var(--accent); }
+.bd-sub { margin: 8px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.bd-empty { padding: 18px 14px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); text-align: center; }
+.bd-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.dr-go { margin-top: 12px; }
+@media (max-width: 640px) {
+  .bd-item { flex-wrap: wrap; }
+  .bd-item .tx { flex-basis: 100%; }
+  .bd-item .go { flex: 1 1 auto; }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
@@ -324,6 +362,8 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
       <button role="tab" data-tab="now" aria-selected="false">Сейчас</button>
       <button role="tab" data-tab="roles" aria-selected="false">По ролям</button>
       <button role="tab" data-tab="lenta" aria-selected="true">Лента</button>
+      <button role="tab" data-tab="prep" aria-selected="false">Заготовки<span class="cnt" id="c-prep" hidden></span></button>
+      <button role="tab" data-tab="topics" aria-selected="false">5-минутка<span class="cnt" id="c-topics" hidden></span></button>
       <button role="tab" data-tab="rules" aria-selected="false">Правила</button>
       <button role="tab" data-tab="setup" aria-selected="false" class="edonly" hidden>Настройка</button>
     </div>
@@ -357,6 +397,8 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
 
   <section class="panel" id="p-now" hidden></section>
   <section class="panel" id="p-roles" hidden></section>
+  <section class="panel" id="p-prep" hidden></section>
+  <section class="panel" id="p-topics" hidden></section>
   <section class="panel" id="p-rules" hidden></section>
   <section class="panel setup" id="p-setup" hidden></section>
 
@@ -390,7 +432,7 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
   var PH = { open: 'Открытие', service: 'Ведение смены', close: 'Закрытие' };
   var PHW = { all: [T0, T1], open: [420, 480], service: [480, 1260], close: [1260, 1320] };
   var PALETTE = [['su', 'Красный'], ['p', 'Зелёный'], ['ham', 'Синий'], ['gc', 'Жёлтый'], ['xc', 'Персиковый'], ['tq', 'Бирюзовый'], ['vi', 'Фиолетовый'], ['pk', 'Розовый'], ['gy', 'Серый'], ['or', 'Оранжевый']];
-  var TABS = ['now', 'roles', 'lenta', 'rules', 'setup'];
+  var TABS = ['now', 'roles', 'lenta', 'prep', 'topics', 'rules', 'setup'];
   var st = { tab: 'lenta', phase: 'all', ppm: 4, roles: {}, shifts: {}, types: {}, helpers: false, probe: null };
   var lastFocus = null, suppressClick = false;
 
@@ -435,6 +477,8 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
     st.tab = name;
     document.querySelectorAll('#tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
     TABS.forEach(function (n) { var p = $('#p-' + n); if (p) p.hidden = n !== name; });
+    var tsel = $('#tabs button[aria-selected="true"]'), tbar = $('#tabs');
+    if (tsel && tbar && tbar.scrollWidth > tbar.clientWidth) tbar.scrollLeft = tsel.offsetLeft - (tbar.clientWidth - tsel.offsetWidth) / 2;
     rerender();
   }
   function rerender() {
@@ -443,6 +487,7 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
     else if (st.tab === 'roles') renderRoles();
     else if (st.tab === 'rules') renderRules();
     else if (st.tab === 'lenta') renderTimeline();
+    else if (st.tab === 'prep' || st.tab === 'topics') renderBoard(st.tab);
     else if (st.tab === 'setup' && ED) ED.renderSetup();
   }
   document.querySelectorAll('#tabs button').forEach(function (b) { b.addEventListener('click', function () { setTab(b.dataset.tab); }); });
@@ -641,6 +686,12 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
     if (t.cross && t.crossNote) b.append(el('div', { class: 'note', text: '⇄ ' + t.crossNote }));
     if (t.guess) b.append(el('div', { class: 'note', text: 'Черновик: время и содержание этой задачи нужно подтвердить под вашу кухню.' }));
     if (t.desc) b.append(el('div', { class: 'dr-desc', text: t.desc }));
+    if (SHARED && (t.type === 'prep' || t.type === 'meeting')) {
+      var kind = t.type === 'prep' ? 'prep' : 'topics';
+      var go = el('button', { type: 'button', class: 'btn accent dr-go', text: kind === 'prep' ? 'Список заготовок' : 'Темы для пятиминутки' });
+      go.addEventListener('click', function () { closeTask(); setTab(kind); });
+      b.append(go);
+    }
     $('#scrim').hidden = false; $('#drawer').hidden = false;
     $('#dr-x').focus();
   }
@@ -1123,6 +1174,237 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
   })();
   
 
+  /* ---------- общие списки: заготовки и темы пятиминутки ----------
+     Пишут и читают только вошедшие сотрудники (вход через Google, Firebase Auth). Хранятся в общей базе
+     (Firebase Realtime Database, REST): /b/prep и /b/topics. Запись = { t: текст, by: имя, uid, at: время, done, doneBy, doneAt }.
+     Время ставит сервер. Правила базы пускают только вошедших и проверяют форму записи. */
+  var SHARED = 'https://kitchen-bread-default-rtdb.europe-west1.firebasedatabase.app', FB_KEY = 'AIzaSyClWTe3cQ69v7nG1qUkSLjYdnuN743U2Fo', FB_DOMAIN = 'kitchen-bread.firebaseapp.com';
+  var SV = { '.sv': 'timestamp' };
+  var BD_KEY = 'kitchen-board';
+  var BOARDS = {
+    prep: { title: 'Заготовки', lead: 'Что нужно заготовить. Любой вошедший сотрудник может добавить запись; сделали — нажмите «Готово», и запись зачеркнётся.', ph: 'Например: нарезать лук 5 кг', ok: '✓ Готово', undo: 'Вернуть', empty: 'Пока ничего не записано. Добавьте первую заготовку.', sub: 'Сделано за последние сутки', clear: 'Убрать сделанные' },
+    topics: { title: 'Темы для пятиминутки', lead: 'Что обсудить на пятиминутке. Записывайте сюда любые темы; обсудили — нажмите «Обсудили».', ph: 'Например: проверить сроки в холодильнике', ok: '✓ Обсудили', undo: 'Вернуть', empty: 'Тем пока нет. Запишите, что нужно обсудить.', sub: 'Обсуждено за последние сутки', clear: 'Убрать обсуждённые' }
+  };
+  var BD = { prep: {}, topics: {} }, bdLoaded = false, bdBusy = 0, bdLast = 0, bdMsg = { text: '', err: false };
+  var BU = null, bdAuth = 'wait';   /* wait — проверяем вход, out — не вошли, in — вошли, err — вход не загрузился */
+  var DAY = 86400000, BD_MS = window.__BD_MS || 10000;
+
+  function bdName() { return BU ? (BU.name || '').trim().slice(0, 40) : ''; }
+  function bdToken() { return window.KAuth ? window.KAuth.token() : Promise.resolve(null); }
+  function bdApi(method, path, body) {
+    return bdToken().then(function (tok) {
+      if (!tok) throw new Error('auth');
+      var o = { method: method, cache: 'no-store' };
+      if (body !== undefined) { o.body = JSON.stringify(body); o.headers = { 'Content-Type': 'application/json' }; }
+      return fetch(SHARED + path + '.json?auth=' + encodeURIComponent(tok) + (method === 'GET' ? '&t=' + Date.now() : ''), o);
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    });
+  }
+  function bdSay(text, err) {
+    bdMsg = { text: text || '', err: !!err };
+    var n = $('#bd-msg'); if (n) { n.textContent = bdMsg.text; n.className = 'bd-msg' + (err ? ' err' : ''); }
+  }
+  function bdWhen(ms) {
+    if (!ms) return '';
+    var d = new Date(ms), t = pad(d.getHours()) + ':' + pad(d.getMinutes()), n = new Date();
+    if (d.toDateString() === n.toDateString()) return t;
+    if (d.toDateString() === new Date(n.getTime() - DAY).toDateString()) return 'вчера ' + t;
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + t;
+  }
+  function bdOpen(kind) { return keys(BD[kind]).filter(function (k) { return !BD[kind][k].done; }).length; }
+  function bdCounts() {
+    ['prep', 'topics'].forEach(function (k) {
+      var n = $('#c-' + k), c = (bdLoaded && bdAuth === 'in') ? bdOpen(k) : 0;
+      if (!n) return;
+      n.textContent = String(c); n.hidden = !c;
+    });
+  }
+  function bdSave() { try { localStorage.setItem(BD_KEY, JSON.stringify({ uid: BU && BU.uid, data: BD })); } catch (e) {} }
+  function bdLoadCache(uid) {
+    try { var c = JSON.parse(localStorage.getItem(BD_KEY) || 'null'); if (c && c.uid === uid && c.data && c.data.prep && c.data.topics) { BD = c.data; bdLoaded = true; return; } } catch (e) {}
+  }
+  function bdOnBoard() { return st.tab === 'prep' || st.tab === 'topics'; }
+
+  /* читаем оба списка одним запросом; пока идёт своя запись, чужие данные не накладываем */
+  function bdRefresh(force) {
+    if (!SHARED || bdAuth !== 'in') return Promise.resolve();
+    if (bdBusy > 0 && !force) return Promise.resolve();
+    bdLast = Date.now();
+    return bdApi('GET', '/b').then(function (d) {
+      if (bdBusy > 0 && !force) return;
+      d = d || {};
+      var nb = { prep: d.prep || {}, topics: d.topics || {} };
+      var changed = JSON.stringify(nb) !== JSON.stringify(BD) || !bdLoaded;
+      BD = nb; bdLoaded = true; bdSave(); bdCounts();
+      if (bdMsg.err) bdSay('');
+      if (changed && bdOnBoard()) renderBoardList(st.tab);
+      bdCleanup();
+    }).catch(function (e) {
+      if (!bdOnBoard() || bdMsg.err) return;
+      var denied = e && (e.message === '401' || e.message === '403');
+      bdSay(denied ? 'Нет доступа к списку. Выйдите и войдите снова; если не помогает, сообщите руководителю.' : (bdLoaded ? 'Нет связи: показан сохранённый список. Попробую снова.' : 'Нет связи, список не загрузился. Попробую снова.'), true);
+    });
+  }
+  /* сделанные больше двух суток назад убираем из базы, чтобы она не росла */
+  function bdCleanup() {
+    ['prep', 'topics'].forEach(function (kind) {
+      var del = {}, n = 0;
+      keys(BD[kind]).forEach(function (id) { var it = BD[kind][id]; if (it.done && it.doneAt && Date.now() - it.doneAt > 2 * DAY && n < 30) { del[id] = null; n++; } });
+      if (n) bdApi('PATCH', '/b/' + kind, del).catch(function () {});
+    });
+  }
+  function bdWrite(promise, fail) {
+    bdBusy++;
+    return promise.then(function (r) { bdBusy--; return r; }, function () {
+      bdBusy--; bdSay('Не получилось сохранить: проверьте связь и повторите.', true);
+      if (fail) fail();
+      return bdRefresh(true).then(function () { throw 0; });
+    });
+  }
+  function bdAdd(kind, text) {
+    text = text.trim().slice(0, 120);
+    if (!text || !BU) return;
+    var by = bdName(), tmp = 'tmp' + Date.now(), item = { t: text, by: by, uid: BU.uid, at: Date.now(), done: false, pend: true };
+    BD[kind][tmp] = item; renderBoardList(kind); bdCounts();
+    var body = { t: text, uid: BU.uid, at: SV, done: false }; if (by) body.by = by;
+    bdWrite(bdApi('POST', '/b/' + kind, body), function () { delete BD[kind][tmp]; renderBoardList(kind); bdCounts(); }).then(function (r) {
+      delete BD[kind][tmp];
+      if (r && r.name) { item.pend = false; BD[kind][r.name] = item; }
+      bdSave(); renderBoardList(kind); bdCounts(); return bdRefresh(true);
+    }).catch(function () {});
+  }
+  function bdToggle(kind, id, done) {
+    var it = BD[kind][id]; if (!it) return;
+    var old = { done: it.done, doneBy: it.doneBy, doneAt: it.doneAt }, by = bdName();
+    it.done = done; it.doneBy = done && by ? by : undefined; it.doneAt = done ? Date.now() : undefined;
+    renderBoardList(kind); bdCounts();
+    var body = { done: done, doneBy: done && by ? by : null, doneAt: done ? SV : null };
+    bdWrite(bdApi('PATCH', '/b/' + kind + '/' + id, body), function () { it.done = old.done; it.doneBy = old.doneBy; it.doneAt = old.doneAt; renderBoardList(kind); bdCounts(); }).then(function () { bdSave(); return bdRefresh(true); }).catch(function () {});
+  }
+  function bdRemove(kind, id) {
+    var it = BD[kind][id]; if (!it) return;
+    if (!window.confirm('Удалить запись «' + it.t + '»?')) return;
+    delete BD[kind][id]; renderBoardList(kind); bdCounts();
+    bdWrite(bdApi('DELETE', '/b/' + kind + '/' + id)).then(function () { bdSave(); return bdRefresh(true); }).catch(function () {});
+  }
+  function bdClear(kind) {
+    var ids = keys(BD[kind]).filter(function (id) { return BD[kind][id].done; });
+    if (!ids.length || !window.confirm('Убрать все отмеченные записи (' + ids.length + ')?')) return;
+    var del = {}; ids.forEach(function (id) { del[id] = null; delete BD[kind][id]; });
+    renderBoardList(kind); bdCounts();
+    bdWrite(bdApi('PATCH', '/b/' + kind, del)).then(function () { bdSave(); return bdRefresh(true); }).catch(function () {});
+  }
+
+  /* ---- вход ---- */
+  function bdSignIn(btn) {
+    if (!window.KAuth) return;
+    btn.disabled = true; bdSay('Открываю вход Google…');
+    window.KAuth.signIn().then(function () { bdSay(''); }, function (e) {
+      var c = e && e.code || '';
+      btn.disabled = false;
+      if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') { bdSay(''); return; }
+      bdSay(c === 'auth/popup-blocked' ? 'Браузер заблокировал окно входа. Разрешите всплывающие окна для этого сайта и нажмите ещё раз.'
+        : c === 'auth/network-request-failed' ? 'Нет связи. Проверьте интернет и повторите.'
+        : c === 'auth/unauthorized-domain' ? 'Этот адрес сайта не разрешён для входа. Сообщите руководителю.'
+        : 'Не удалось войти' + (c ? ' (' + c + ')' : '') + '. Повторите; если не выходит, сообщите руководителю.', true);
+    });
+  }
+  function bdAuthChange(u) {
+    var was = bdAuth;
+    BU = u && u.uid ? { uid: u.uid, name: u.name || u.email || '' } : null;
+    bdAuth = BU ? 'in' : 'out';
+    if (BU) { if (!bdLoaded) bdLoadCache(BU.uid); }
+    else { BD = { prep: {}, topics: {} }; bdLoaded = false; try { localStorage.removeItem(BD_KEY); } catch (e) {} }
+    bdMsg = { text: '', err: false };
+    bdCounts();
+    if (bdOnBoard()) renderBoard(st.tab); else if (BU && was !== 'in') bdRefresh(true);
+  }
+  function bdLoadAuth() {
+    function go() { try { window.KAuth.start({ apiKey: FB_KEY, authDomain: FB_DOMAIN }, bdAuthChange); } catch (e) { bdAuth = 'err'; if (bdOnBoard()) renderBoard(st.tab); } }
+    if (window.KAuth) { go(); return; }
+    var sc = document.createElement('script'); sc.src = 'fb-auth.js';
+    sc.onload = go;
+    sc.onerror = function () { bdAuth = 'err'; if (bdOnBoard()) renderBoard(st.tab); };
+    document.head.append(sc);
+  }
+
+  function renderBoard(kind) {
+    var p = $('#p-' + kind), B = BOARDS[kind], prevIn = $('.bd-t', p), keep = prevIn ? prevIn.value : ''; p.replaceChildren();
+    var box = el('div', { class: 'board' });
+    box.append(el('div', {}, el('h2', { text: B.title }), el('p', { class: 'bd-lead', text: B.lead })));
+    if (!SHARED) {
+      box.append(el('div', { class: 'bd-empty', text: 'Общий список пока не подключён. Обратитесь к руководителю.' }));
+      p.append(box); return;
+    }
+    if (bdAuth !== 'in') {
+      if (bdAuth === 'wait') box.append(el('div', { class: 'bd-empty', text: 'Проверяю вход…' }));
+      else if (bdAuth === 'err') box.append(el('div', { class: 'bd-empty', text: 'Не удалось загрузить вход. Проверьте интернет и обновите страницу.' }));
+      else {
+        var lg = el('button', { type: 'button', class: 'btn accent', text: 'Войти через Google' });
+        lg.addEventListener('click', function () { bdSignIn(lg); });
+        box.append(el('div', { class: 'card bd-login' }, el('p', { text: 'Чтобы смотреть и добавлять записи, войдите через Google-аккаунт. Это нужно один раз на этом телефоне. Записи подписываются вашим именем.' }), lg));
+        box.append(el('p', { class: 'bd-msg' + (bdMsg.err ? ' err' : ''), id: 'bd-msg', 'aria-live': 'polite', text: bdMsg.text }));
+      }
+      p.append(box); return;
+    }
+    var out = el('button', { type: 'button', class: 'lnk', text: 'Выйти' });
+    out.addEventListener('click', function () { if (window.KAuth) window.KAuth.signOut(); });
+    box.append(el('div', { class: 'bd-who' }, el('span', {}, 'Вы вошли как ', el('b', { text: bdName() || 'без имени' })), out));
+    var inp = el('input', { type: 'text', class: 'bd-t', maxlength: 120, placeholder: B.ph, autocomplete: 'off', 'aria-label': B.title });
+    var form = el('form', { class: 'bd-form' }, inp, el('button', { type: 'submit', class: 'btn accent', text: 'Добавить' }));
+    inp.value = keep;
+    form.addEventListener('submit', function (e) { e.preventDefault(); var v = inp.value; if (!v.trim()) { inp.focus(); return; } inp.value = ''; bdAdd(kind, v); inp.focus(); });
+    box.append(form);
+    box.append(el('p', { class: 'bd-msg' + (bdMsg.err ? ' err' : ''), id: 'bd-msg', 'aria-live': 'polite', text: bdMsg.text }));
+    box.append(el('div', { id: 'bd-list-' + kind }));
+    p.append(box);
+    renderBoardList(kind);
+    bdRefresh(true);
+  }
+  function renderBoardList(kind) {
+    var host = $('#bd-list-' + kind); if (!host) return;
+    var B = BOARDS[kind], d = BD[kind], now = Date.now();
+    var ids = keys(d), open = ids.filter(function (i) { return !d[i].done; }).sort(function (a, b) { return (d[a].at || 0) - (d[b].at || 0); });
+    var done = ids.filter(function (i) { return d[i].done && (!d[i].doneAt || now - d[i].doneAt < DAY); }).sort(function (a, b) { return (d[b].doneAt || 0) - (d[a].doneAt || 0); });
+    host.replaceChildren();
+    function row(id) {
+      var it = d[id], isDone = !!it.done;
+      var meta = isDone
+        ? (it.doneBy ? 'Отметил: ' + it.doneBy + ' · ' : 'Отмечено · ') + bdWhen(it.doneAt)
+        : (it.by ? it.by + ' · ' : '') + bdWhen(it.at);
+      var li = el('li', { class: 'bd-item' + (isDone ? ' done' : '') + (it.pend ? ' pend' : '') },
+        el('span', { class: 'tx' }, el('span', { class: 'tt', text: it.t }), el('span', { class: 'mt', text: meta })));
+      var go = el('button', { type: 'button', class: isDone ? 'btn go' : 'btn ok go', text: isDone ? B.undo : B.ok, disabled: it.pend || null, 'aria-label': (isDone ? B.undo : B.ok.replace('✓ ', '')) + ': ' + it.t });
+      go.addEventListener('click', function () { bdToggle(kind, id, !isDone); });
+      var x = el('button', { type: 'button', class: 'x', text: '×', title: 'Удалить запись', 'aria-label': 'Удалить запись: ' + it.t, disabled: it.pend || null });
+      x.addEventListener('click', function () { bdRemove(kind, id); });
+      li.append(go, x);
+      return li;
+    }
+    if (!bdLoaded) { host.append(el('div', { class: 'bd-empty', text: 'Загружаю…' })); return; }
+    if (!open.length) host.append(el('div', { class: 'bd-empty', text: B.empty }));
+    else host.append(el('ul', { class: 'bd-list' }, open.map(row)));
+    if (done.length) {
+      host.append(el('p', { class: 'bd-sub', text: B.sub }), el('ul', { class: 'bd-list' }, done.map(row)));
+      var cl = el('button', { type: 'button', class: 'btn', text: B.clear });
+      cl.addEventListener('click', function () { bdClear(kind); });
+      host.append(el('div', { class: 'bd-foot' }, cl));
+    }
+  }
+  function bdStart() {
+    if (!SHARED) return;
+    bdLoadAuth();
+    setInterval(function () {
+      if (document.hidden || bdAuth !== 'in') return;
+      var gap = bdOnBoard() ? BD_MS : BD_MS * 6;
+      if (Date.now() - bdLast >= gap) bdRefresh();
+    }, Math.min(3000, BD_MS / 2));
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) bdRefresh(); });
+    window.addEventListener('online', function () { bdRefresh(true); });
+  }
+
   /* ---------- автообновление: раз в 5 минут приложение заново читает data.json ---------- */
   var pollT = null, pollFails = 0;
   function setLive(s) { var n = $('#live'); if (n) n.textContent = s; }
@@ -1162,6 +1444,7 @@ input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--fg); fle
     setTab(ui && ['now', 'roles', 'lenta', 'rules'].indexOf(ui.tab) >= 0 ? ui.tab : 'lenta');
     if (ui && (ui.phase === 'open' || ui.phase === 'service' || ui.phase === 'close')) setPhase(ui.phase); else scrollToMin(T0, 'start');
     startPoll();
+    bdStart();
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {});
     setInterval(function () {
       if (st.tab === 'now') renderNow();
