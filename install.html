@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#e0383e">
+<title>Кухня: установка приложения</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f3f4f8;--card:#fff;--ink:#1d2030;--mut:#5d6378;--acc:#e0383e;--line:#e1e3ec}
+@media (prefers-color-scheme:dark){:root{--bg:#14151c;--card:#1e2029;--ink:#eceef6;--mut:#a0a6bb;--line:#2e3140}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;gap:14px;padding:6px 0 4px}
+header img{width:64px;height:64px;border-radius:16px;background:#fff}
+h1{font-size:22px;margin:0;line-height:1.2}
+header p{margin:2px 0 0;color:var(--mut);font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+h2{font-size:18px;margin:0 0 10px}
+ol{margin:10px 0 0;padding-left:22px}
+li{margin:6px 0}
+.btn{display:block;text-align:center;background:var(--acc);color:#fff;text-decoration:none;font-weight:600;padding:14px 16px;border-radius:12px;font-size:17px}
+.btn.alt{background:transparent;color:var(--acc);border:2px solid var(--acc)}
+.note{color:var(--mut);font-size:14px;margin:10px 0 0}
+body.ios #android{order:2}body.ios #iphone{order:1}
+b{font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <img src="icons/icon-192.png" alt="">
+  <div><h1>Приложение «Кухня»</h1><p>Расписание смены, заготовки и 5-минутка</p></div>
+</header>
+
+<section id="android">
+  <h2>Android</h2>
+  <a class="btn" href="kitchen.apk" download>Скачать приложение</a>
+  <ol>
+    <li>Нажмите кнопку и дождитесь загрузки файла <b>kitchen.apk</b>.</li>
+    <li>Откройте файл (внизу экрана или в «Загрузках»).</li>
+    <li>Если телефон спросит, разрешите установку из этого источника (браузера или «Файлов»).</li>
+    <li>Нажмите «Установить». Если Google Play Protect предупредит, выберите «Всё равно установить».</li>
+  </ol>
+  <p class="note">Значок «Кухня» появится среди приложений. Обновлять вручную не нужно: расписание подтягивается само.</p>
+</section>
+
+<section id="iphone">
+  <h2>iPhone</h2>
+  <a class="btn alt" href="./">Открыть «Кухню»</a>
+  <ol>
+    <li>Откройте эту страницу в <b>Safari</b> (не в Telegram, не в Instagram: там нет нужной кнопки).</li>
+    <li>Нажмите «Поделиться» (квадрат со стрелкой внизу экрана).</li>
+    <li>Выберите «На экран “Домой”» и нажмите «Добавить».</li>
+  </ol>
+  <p class="note">На главном экране появится значок «Кухня». Открывается как обычное приложение. Если вход через Google на значке не срабатывает, один раз войдите через Safari по обычной ссылке.</p>
+</section>
+</main>
+<script>
+if(/iPhone|iPad|iPod/i.test(navigator.userAgent))document.body.classList.add('ios');
+</script>
+</body>
+</html>
